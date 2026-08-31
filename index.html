@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>플랜두씨 다이어리 - Supabase 서버 연동 버전</title>
-<!-- Supabase CDN 추가 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>플랜두씨 다이어리</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -24,17 +22,12 @@
     padding: 24px;
   }
   h1 { font-size: 24px; font-weight: 700; margin: 0; color: #1a1a1a; }
-  .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .subtitle { font-size: 13px; color: #666; margin: 6px 0 0; }
-  
-  .auth-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .auth-box input { padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; flex: 1; min-width: 140px; }
+  .subtitle { font-size: 13px; color: #666; margin: 6px 0 20px; }
   
   .banner {
-    background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px;
-    padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #3730a3; line-height: 1.4;
+    background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #991b1b; display: none;
   }
-  .banner.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; display: none; }
   
   .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
   .tab-btn {
@@ -57,7 +50,7 @@
   
   .plan-form-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
   .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  input[type=text], input[type=password], select, textarea {
+  input[type=text], select, textarea {
     padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; color: #1f2937;
   }
   .form-row input[name=text] { flex: 2; min-width: 180px; }
@@ -104,7 +97,6 @@
   textarea.reflection { width: 100%; padding: 12px; border-radius: 8px; font-size: 13px; resize: vertical; background: #fff; border: 1px solid #d1d5db; line-height: 1.5; }
   .hint-small { font-size: 11px; color: #9ca3af; margin-top: 4px; }
   
-  /* Summary & Filter Styles */
   .summary-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
   .summary-stat { font-size: 16px; font-weight: 700; color: #4f46e5; cursor: pointer; text-decoration: underline; padding: 4px 8px; border-radius: 6px; }
   .summary-stat.active-filter { background: #eef2ff; }
@@ -112,7 +104,6 @@
   .drilldown-item { background: #fff; border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
   .drilldown-item:hover { background: #f3f4f6; }
 
-  /* Modal */
   .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100; }
   .modal-overlay.active { display: flex; }
   .modal-card { background: #fff; padding: 24px; border-radius: 16px; width: 90%; max-width: 440px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
@@ -126,27 +117,10 @@
 <body>
 
 <div class="app-container">
-  <div class="header-flex">
-    <div>
-      <h1>플랜두씨 다이어리</h1>
-      <p class="subtitle">계획하고(Plan), 실행한 뒤(Do), 돌아보기(See)</p>
-    </div>
-    <div id="authStatusArea" style="font-size: 12px; color: #666;"></div>
-  </div>
+  <h1>플랜두씨 다이어리</h1>
+  <p class="subtitle">계획하고(Plan), 실행한 뒤(Do), 돌아보기(See)</p>
 
-  <!-- 로그인 영역 (Supabase Auth 연동) -->
-  <div class="auth-box" id="authBox">
-    <span style="font-size: 13px; font-weight: 600; color: #333;">로그인하기:</span>
-    <input type="text" id="authEmail" placeholder="이메일 입력">
-    <input type="password" id="authPassword" placeholder="비밀번호 입력">
-    <button class="btn-action" id="loginBtn" style="background:#4f46e5; color:#fff; border:none;">로그인</button>
-    <button class="btn-action" id="signupBtn">회원가입</button>
-  </div>
-
-  <div class="banner" id="loginNotice">
-    현재 로그인 정보가 없습니다. 로그인하면 <b>서버 데이터베이스</b>에 안전하게 내 기록이 저장됩니다.
-  </div>
-  <div class="banner error" id="saveError">서버 저장에 실패했습니다. 네트워크를 확인해 주세요.</div>
+  <div class="banner" id="saveError">저장에 실패했습니다. 로컬 스토리지를 확인해 주세요.</div>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="day" onclick="switchTab('day')">오늘의 계획</button>
@@ -185,11 +159,11 @@
     <div class="section">
       <div class="section-head"><h2>하루 돌아보기</h2></div>
       <textarea class="reflection" id="reflectionBox" rows="4" placeholder="오늘 어땠나요? 잘된 점이나 아쉬운 점을 자유롭게 적어보세요."></textarea>
-      <p class="hint-small">글을 쓰면 서버에 자동으로 저장됩니다.</p>
+      <p class="hint-small">글을 쓰면 자동으로 저장됩니다.</p>
     </div>
   </div>
 
-  <!-- SUMMARY VIEW (DRILLDOWN) -->
+  <!-- SUMMARY VIEW -->
   <div class="view" id="view-summary">
     <div class="section">
       <div class="section-head"><h2>전체 계획 집계</h2></div>
@@ -247,12 +221,23 @@
 </div>
 
 <script>
-// Supabase 설정 (사용하시는 프로젝트 정보로 교체해 주세요)
-const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT.supabase.co';
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const STORAGE = {
+  get() {
+    const raw = localStorage.getItem('plandosee:local:v1');
+    return raw ? JSON.parse(raw) : null;
+  },
+  set(data) {
+    try {
+      localStorage.setItem('plandosee:local:v1', JSON.stringify(data));
+      document.getElementById('saveError').style.display = 'none';
+      return true;
+    } catch (e) {
+      document.getElementById('saveError').style.display = 'block';
+      return false;
+    }
+  }
+};
 
-let currentUser = null;
 let days = {};
 let selectedDate = today();
 let currentTab = 'day';
@@ -289,99 +274,22 @@ function buildSeedData() {
   };
 }
 
-// Supabase DB 연동 스토리지 레이어
-const STORAGE = {
-  async get() {
-    if (!currentUser) {
-      // 로그인 안 된 경우 로컬 임시 저장소 사용
-      const raw = localStorage.getItem('plandosee:guest');
-      return raw ? JSON.parse(raw) : buildSeedData();
-    }
-    try {
-      const { data, error } = await supabaseClient
-        .from('diaries')
-        .select('content')
-        .eq('user_id', currentUser.id)
-        .single();
-      if (error || !data) return buildSeedData();
-      return data.content;
-    } catch (e) {
-      console.error(e);
-      return buildSeedData();
-    }
-  },
-  async set(data) {
-    if (!currentUser) {
-      localStorage.setItem('plandosee:guest', JSON.stringify(data));
-      return true;
-    }
-    try {
-      const { error } = await supabaseClient
-        .from('diaries')
-        .upsert({ user_id: currentUser.id, content: data, updated_at: new Date() });
-      if (error) throw error;
-      document.getElementById('saveError').style.display = 'none';
-      return true;
-    } catch (e) {
-      console.error(e);
-      document.getElementById('saveError').style.display = 'block';
-      return false;
-    }
+function loadData() {
+  let data = STORAGE.get();
+  if (!data) {
+    data = buildSeedData();
+    STORAGE.set(data);
   }
-};
-
-async function checkAuth() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  currentUser = session ? session.user : null;
-  const authStatusArea = document.getElementById('authStatusArea');
-  const authBox = document.getElementById('authBox');
-  const loginNotice = document.getElementById('loginNotice');
-
-  if (currentUser) {
-    authBox.style.display = 'none';
-    loginNotice.style.display = 'none';
-    authStatusArea.innerHTML = `<b>${currentUser.email}</b>님 접속 중 <button class="btn-action" id="logoutBtn" style="margin-left:6px;">로그아웃</button>`;
-    document.getElementById('logoutBtn').onclick = async () => {
-      await supabaseClient.auth.signOut();
-      window.location.reload();
-    };
-  } else {
-    authBox.style.display = 'flex';
-    loginNotice.style.display = 'block';
-    authStatusArea.innerHTML = '로그인되지 않음';
-  }
+  days = data;
 }
 
-document.getElementById('loginBtn').onclick = async () => {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value.trim();
-  if (!email || !password) { alert('이메일과 비밀번호를 입력해주세요.'); return; }
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) alert('로그인 실패: ' + error.message);
-  else { alert('로그인 성공!'); window.location.reload(); }
-};
-
-document.getElementById('signupBtn').onclick = async () => {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value.trim();
-  if (!email || !password) { alert('이메일과 비밀번호를 입력해주세요.'); return; }
-  const { error } = await supabaseClient.auth.signUp({ email, password });
-  if (error) alert('회원가입 실패: ' + error.message);
-  else alert('회원가입 완료! 이메일 인증 후 로그인해주세요.');
-};
-
-async function loadData() {
-  await checkAuth();
-  days = await STORAGE.get();
-}
-
-async function persist() {
-  await STORAGE.set(days);
+function persist() {
+  STORAGE.set(days);
 }
 
 function debouncedPersist() {
   clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async () => { await persist(); }, 400);
+  saveTimeout = setTimeout(() => { persist(); }, 400);
 }
 
 function ensureDay(date) {
@@ -480,11 +388,11 @@ function renderPlans() {
   });
 
   container.querySelectorAll('[data-remove]').forEach(btn => {
-    btn.onclick = async () => {
+    btn.onclick = () => {
       if (!confirm('이 계획을 정말 지우시겠습니까?')) return;
       const id = btn.dataset.remove;
       ensureDay(selectedDate).plans = ensureDay(selectedDate).plans.filter(p => p.id !== id);
-      await persist();
+      persist();
       renderAll();
     };
   });
@@ -502,12 +410,12 @@ function renderPlans() {
   });
 
   container.querySelectorAll('[data-toggle]').forEach(btn => {
-    btn.onclick = async () => {
+    btn.onclick = () => {
       const id = btn.dataset.toggle;
       const value = btn.dataset.value === 'true';
       const plan = ensureDay(selectedDate).plans.find(p => p.id === id);
       plan.done = plan.done === value ? null : value;
-      await persist();
+      persist();
       renderAll();
     };
   });
@@ -615,7 +523,7 @@ document.getElementById('modalCancelBtn').onclick = () => {
   editingPlanId = null;
 };
 
-document.getElementById('modalSaveBtn').onclick = async () => {
+document.getElementById('modalSaveBtn').onclick = () => {
   if (!editingPlanId) return;
   const plan = ensureDay(selectedDate).plans.find(p => p.id === editingPlanId);
   if (!plan) return;
@@ -644,7 +552,7 @@ document.getElementById('modalSaveBtn').onclick = async () => {
   document.getElementById('editModal').classList.remove('active');
   editingPlanId = null;
 
-  await persist();
+  persist();
   renderAll();
 };
 
@@ -663,7 +571,7 @@ function renderAll() {
   renderReflection();
 }
 
-document.getElementById('addPlanBtn').onclick = async () => {
+document.getElementById('addPlanBtn').onclick = () => {
   const textInput = document.getElementById('newText');
   const periodInput = document.getElementById('newPeriod');
   const priorityInput = document.getElementById('newPriority');
@@ -693,7 +601,7 @@ document.getElementById('addPlanBtn').onclick = async () => {
   criteriaInput.value = '';
   estTimeInput.value = '';
 
-  await persist();
+  persist();
   renderAll();
 };
 
@@ -701,10 +609,8 @@ document.getElementById('newText').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('addPlanBtn').click();
 });
 
-(async function init() {
-  await loadData();
-  renderAll();
-})();
+loadData();
+renderAll();
 </script>
 </body>
 </html>
