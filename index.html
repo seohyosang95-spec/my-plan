@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>플랜두씨 다이어리</title>
+<title>플랜두씨 다이어리 - 이력 관리 버전</title>
 <style>
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    max-width: 720px;
+    max-width: 760px;
     margin: 0 auto;
     padding: 16px;
     color: #222;
@@ -37,21 +37,40 @@
   .date-chip.add { border: 1px dashed #ccc; color: #888; }
   .section { margin-bottom: 20px; }
   .section-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-  .plan-form { display: flex; gap: 6px; margin-bottom: 10px; }
-  input[type=text], textarea {
-    padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: inherit;
+  
+  /* Plan Form Styles */
+  .plan-form-box { background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  input[type=text], select, textarea {
+    padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff;
   }
-  .plan-form input[name=time] { width: 75px; }
-  .plan-form input[name=text] { flex: 1; }
+  .form-row input[name=text] { flex: 2; min-width: 200px; }
+  .form-row input[name=period] { flex: 1; min-width: 130px; }
+  .form-row select[name=priority] { width: 90px; }
+  .form-row input[name=criteria] { flex: 1; min-width: 140px; }
+  .form-row input[name=estTime] { width: 90px; }
   .btn-add {
-    padding: 8px 12px; background: #222; color: #fff; border: none; border-radius: 8px; cursor: pointer;
+    padding: 8px 16px; background: #222; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; align-self: flex-end;
   }
+  
   .empty-hint { font-size: 13px; color: #aaa; margin: 8px 0; }
-  .plan-card { border: 1px solid #eee; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fff; }
-  .plan-row { display: flex; align-items: flex-start; gap: 8px; }
-  .plan-text { flex: 1; font-size: 14px; font-weight: 500; }
-  .plan-time { color: #999; font-weight: 400; margin-right: 6px; }
-  .btn-remove { border: none; background: none; color: #bbb; cursor: pointer; font-size: 16px; padding: 2px; }
+  .plan-card { border: 1px solid #eee; border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #fff; }
+  .plan-main-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .plan-title { font-size: 15px; font-weight: 600; color: #111; }
+  .plan-meta { display: flex; gap: 8px; font-size: 12px; color: #666; margin-top: 4px; flex-wrap: wrap; }
+  .badge { background: #eee; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+  .badge.priority-high { background: #FCEBEB; color: #A32D2D; }
+  .badge.priority-mid { background: #FEF3D6; color: #8F6B00; }
+  .badge.priority-low { background: #E1F5EE; color: #0F6E56; }
+  
+  .plan-actions { display: flex; gap: 6px; }
+  .btn-action { border: 1px solid #ddd; background: #fff; padding: 4px 8px; border-radius: 6px; font-size: 12px; cursor: pointer; color: #444; }
+  .btn-action:hover { background: #f5f5f2; }
+  
+  .history-box { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #eee; font-size: 12px; color: #888; display: none; }
+  .history-box.open { display: block; }
+  .history-item { background: #f9f9f6; padding: 6px 8px; border-radius: 6px; margin-top: 4px; border: 1px solid #eee; }
+  
   .check-row { display: flex; gap: 6px; margin-top: 8px; }
   .check-btn {
     font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid #ddd;
@@ -60,25 +79,17 @@
   .check-btn.done.active { border-color: #1D9E75; background: #E1F5EE; color: #0F6E56; }
   .check-btn.missed.active { border-color: #E24B4A; background: #FCEBEB; color: #A32D2D; }
   .note-input { width: 100%; margin-top: 8px; padding: 6px 8px; border: 1px solid #eee; border-radius: 6px; font-size: 12px; }
+  
   textarea.reflection { width: 100%; padding: 10px; border-radius: 8px; font-size: 13px; resize: vertical; background: #fff; }
   .hint-small { font-size: 11px; color: #aaa; margin-top: 4px; }
-  .stats-card { background: #f7f7f5; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center; }
-  .stats-rate { font-size: 32px; font-weight: 700; margin: 4px 0; }
-  .stats-label { font-size: 13px; color: #888; }
-  .stats-sub { font-size: 12px; color: #aaa; }
-  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .stat-box {
-    border: none; border-radius: 10px; padding: 14px 8px; display: flex;
-    flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
-  }
-  .stat-box .num { font-size: 22px; font-weight: 700; }
-  .stat-box .lab { font-size: 12px; }
-  .drill-back { border: none; background: none; color: #888; font-size: 13px; margin-bottom: 12px; padding: 0; cursor: pointer; }
-  .drill-item { border: 1px solid #eee; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; background: #fff; cursor: pointer; transition: background 0.1s; }
-  .drill-item:hover { background: #f9f9f6; }
-  .drill-date { font-size: 12px; color: #999; }
-  .drill-text { font-size: 14px; font-weight: 500; margin-top: 2px; }
-  .drill-note { font-size: 12px; color: #888; margin-top: 4px; }
+  
+  /* Edit Modal */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 100; }
+  .modal-overlay.active { display: flex; }
+  .modal-card { background: #fff; padding: 20px; border-radius: 12px; width: 90%; max-width: 450px; display: flex; flex-direction: column; gap: 10px; }
+  .modal-card h3 { margin: 0 0 8px 0; font-size: 16px; }
+  .modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+  
   .view { display: none; }
   .view.active { display: block; }
 </style>
@@ -86,17 +97,16 @@
 <body>
 
 <h1>플랜두씨 다이어리</h1>
-<p class="subtitle">계획(Plan) → 실행(Do) → 돌아보기(See)</p>
+<p class="subtitle">계획(Plan) → 실행(Do) → 돌아보기(See) [이력 보존 기능 포함]</p>
 
 <div class="banner">
-  이 페이지는 아직 로그인 기능이 없습니다[cite: 1]. <b>이 링크를 아는 사람은 누구나 보고 편집할 수 있습니다[cite: 1].</b>
-  공개해도 괜찮은 내용만 기록해 주세요[cite: 1]. 잠그는 기능은 이후 과제에서 추가됩니다[cite: 1].
+  이 페이지는 아직 로그인 기능이 없습니다. <b>이 링크를 아는 사람은 누구나 보고 편집할 수 있습니다.</b>
+  공개해도 괜찮은 내용만 기록해 주세요.
 </div>
-<div class="banner error" id="saveError">저장에 실패했습니다. 네트워크를 확인하고 다시 시도해 주세요[cite: 1].</div>
+<div class="banner error" id="saveError">저장에 실패했습니다. 네트워크를 확인하고 다시 시도해 주세요.</div>
 
 <div class="tabs">
   <button class="tab-btn active" data-tab="day">오늘의 계획</button>
-  <button class="tab-btn" data-tab="stats">집계</button>
 </div>
 
 <!-- DAY VIEW -->
@@ -104,12 +114,25 @@
   <div class="date-scroll" id="dateScroll"></div>
 
   <div class="section">
-    <div class="section-head"><h2>계획 (Plan)</h2></div>
-    <div class="plan-form">
-      <input type="text" name="time" id="newTime" placeholder="09:00" maxlength="5">
-      <input type="text" name="text" id="newText" placeholder="예: 알고리즘 문제 2개 풀기">
-      <button class="btn-add" id="addPlanBtn">+</button>
+    <div class="section-head"><h2>계획 등록 (T06-C04 ~ C07)</h2></div>
+    <div class="plan-form-box">
+      <div class="form-row">
+        <input type="text" name="text" id="newText" placeholder="예: ALEPH 진행 또는 운동 30분">
+        <input type="text" name="period" id="newPeriod" placeholder="기간 (예: 09:00~10:00)">
+      </div>
+      <div class="form-row">
+        <select name="priority" id="newPriority">
+          <option value="상">우선순위: 상</option>
+          <option value="중" selected>우선순위: 중</option>
+          <option value="하">우선순위: 하</option>
+        </select>
+        <input type="text" name="criteria" id="newCriteria" placeholder="성공 기준 (예: 에러 없이 빌드 성공)">
+        <input type="text" name="estTime" id="newEstTime" placeholder="예상 시간(분)" value="30">
+      </div>
+      <button class="btn-add" id="addPlanBtn">계획 추가하기</button>
     </div>
+    
+    <div class="section-head"><h2>계획 목록 및 수정 이력 (T06-C08)</h2></div>
     <div id="plansContainer"></div>
   </div>
 
@@ -120,47 +143,34 @@
   </div>
 </div>
 
-<!-- STATS VIEW -->
-<div class="view" id="view-stats">
-  <div class="stats-card">
-    <div class="stats-label">전체 실행률</div>
-    <div class="stats-rate" id="rateNum">0%</div>
-    <div class="stats-sub" id="totalNum">총 계획 0건</div>
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-card">
+    <h3>계획 수정 (수정 전 내용은 이력에 보존됩니다)</h3>
+    <label class="hint-small">계획 내용</label>
+    <input type="text" id="editModalText">
+    <label class="hint-small">기간</label>
+    <input type="text" id="editModalPeriod">
+    <label class="hint-small">우선순위</label>
+    <select id="editModalPriority">
+      <option value="상">상</option>
+      <option value="중">중</option>
+      <option value="하">하</option>
+    </select>
+    <label class="hint-small">성공 기준</label>
+    <input type="text" id="editModalCriteria">
+    <label class="hint-small">예상 시간</label>
+    <input type="text" id="editModalEstTime">
+    
+    <div class="modal-btns">
+      <button class="btn-action" id="modalCancelBtn">취소</button>
+      <button class="btn-add" id="modalSaveBtn" style="padding: 6px 12px; font-size: 13px;">저장</button>
+    </div>
   </div>
-  <div class="stat-grid">
-    <button class="stat-box" style="background:#E1F5EE" data-filter="done">
-      <span class="num" style="color:#0F6E56" id="doneNum">0</span>
-      <span class="lab" style="color:#0F6E56">완료</span>
-    </button>
-    <button class="stat-box" style="background:#FCEBEB" data-filter="missed">
-      <span class="num" style="color:#A32D2D" id="missedNum">0</span>
-      <span class="lab" style="color:#A32D2D">못함</span>
-    </button>
-    <button class="stat-box" style="background:#f2f2f2" data-filter="pending">
-      <span class="num" style="color:#666" id="pendingNum">0</span>
-      <span class="lab" style="color:#666">체크 안 함</span>
-    </button>
-  </div>
-  <p class="hint-small" style="text-align:center; margin-top:12px;">숫자를 누르면 해당 기록 목록으로 이동합니다[cite: 1].</p>
-</div>
-
-<!-- DRILL VIEW -->
-<div class="view" id="view-drill">
-  <button class="drill-back" id="drillBackBtn">← 집계로 돌아가기</button>
-  <h2 id="drillTitle"></h2>
-  <p class="hint-small" style="margin-bottom: 10px;">항목을 누르면 해당 날짜의 계획 화면으로 이동합니다.</p>
-  <div id="drillContainer"></div>
 </div>
 
 <script>
-/*
-  ============================================================
-  저장소 안내:
-  현재는 브라우저 localStorage를 사용하며[cite: 1], 추후 Supabase 등
-  서버 DB 연동 시 STORAGE 객체의 get/set 함수만 교체하면 됩니다[cite: 1].
-  ============================================================
-*/
-const STORAGE_KEY = 'plandosee:entries';
+const STORAGE_KEY = 'plandosee:entries:v2';
 
 const STORAGE = {
   async get() {
@@ -182,21 +192,20 @@ function fmtDate(d) {
 
 function buildSeedData() {
   const t = today();
-  const y = new Date(); y.setDate(y.getDate() - 1);
-  const yesterday = y.toISOString().slice(0, 10);
   return {
-    [yesterday]: {
-      plans: [
-        { id: uid(), time: '09:00', text: '플랜두씨 다이어리 기획 정리', done: true, actualNote: '초안은 예상보다 30분 더 걸림' },
-        { id: uid(), time: '14:00', text: '데이터 모델(Plan/Do/See) 설계', done: true, actualNote: '' },
-        { id: uid(), time: '20:00', text: '운동 30분', done: false, actualNote: '야근으로 못함' },
-      ],
-      reflection: '오전 작업은 예상보다 시간이 더 걸렸다. 다음엔 준비 시간을 15분 더 넉넉히 잡자.'
-    },
     [t]: {
       plans: [
-        { id: uid(), time: '10:00', text: 'Plan/Do/See 저장 로직 구현', done: null, actualNote: '' },
-        { id: uid(), time: '15:00', text: '집계 화면(드릴다운) 구현', done: null, actualNote: '' },
+        {
+          id: uid(),
+          text: 'ALEPH 진행 및 알고리즘 문제 풀이',
+          period: '10:00 ~ 12:00',
+          priority: '상',
+          criteria: '테스트 케이스 모두 통과',
+          estTime: '120분',
+          done: null,
+          actualNote: '',
+          history: [] // 수정 전 최초 계획 및 이전 버전들이 여기에 누적됨
+        }
       ],
       reflection: ''
     }
@@ -205,8 +214,8 @@ function buildSeedData() {
 
 let days = {};
 let selectedDate = today();
-let currentDrillFilter = null;
 let saveTimeout = null;
+let editingPlanId = null;
 
 async function loadData() {
   let data = await STORAGE.get();
@@ -230,9 +239,7 @@ async function persist() {
 
 function debouncedPersist() {
   clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async () => {
-    await persist();
-  }, 400);
+  saveTimeout = setTimeout(async () => { await persist(); }, 400);
 }
 
 function ensureDay(date) {
@@ -267,34 +274,80 @@ function renderPlans() {
   const dayData = ensureDay(selectedDate);
   container.innerHTML = '';
   if (dayData.plans.length === 0) {
-    container.innerHTML = '<p class="empty-hint">이 날짜에 계획이 없습니다. 위에서 추가해 보세요.</p>';
+    container.innerHTML = '<p class="empty-hint">이 날짜에 등록된 계획이 없습니다. 위에서 계획을 추가해 보세요.</p>';
     return;
   }
+
   dayData.plans.forEach(plan => {
     const card = document.createElement('div');
     card.className = 'plan-card';
+    
+    let priorityClass = 'badge priority-mid';
+    if (plan.priority === '상') priorityClass = 'badge priority-high';
+    if (plan.priority === '하') priorityClass = 'badge priority-low';
+
     card.innerHTML = `
-      <div class="plan-row">
-        <div class="plan-text">${plan.time ? `<span class="plan-time">${plan.time}</span>` : ''}${escapeHtml(plan.text)}</div>
-        <button class="btn-remove" data-remove="${plan.id}" title="삭제">×</button>
+      <div class="plan-main-row">
+        <div>
+          <div class="plan-title">${escapeHtml(plan.text)}</div>
+          <div class="plan-meta">
+            <span class="${priorityClass}">우선순위: ${plan.priority}</span>
+            <span class="badge">기간: ${escapeHtml(plan.period || '미설정')}</span>
+            <span class="badge">성공기준: ${escapeHtml(plan.criteria || '미설정')}</span>
+            <span class="badge">예상시간: ${escapeHtml(plan.estTime || '미설정')}</span>
+          </div>
+        </div>
+        <div class="plan-actions">
+          <button class="btn-action" data-edit="${plan.id}">수정</button>
+          <button class="btn-action" data-toggle-history="${plan.id}">이력 보기 (${plan.history.length})</button>
+          <button class="btn-action" data-remove="${plan.id}" style="color:#A32D2D;">삭제</button>
+        </div>
       </div>
+
       <div class="check-row">
         <button class="check-btn done ${plan.done === true ? 'active' : ''}" data-toggle="${plan.id}" data-value="true">했음</button>
         <button class="check-btn missed ${plan.done === false ? 'active' : ''}" data-toggle="${plan.id}" data-value="false">못함</button>
       </div>
       ${plan.done !== null ? `<input type="text" class="note-input" data-note="${plan.id}" value="${escapeAttr(plan.actualNote || '')}" placeholder="${plan.done ? '실제로 어떻게 했는지 메모 (선택)' : '왜 못했는지 메모 (선택)'}">` : ''}
+
+      <div class="history-box" id="history-${plan.id}">
+        <strong>[T06-C08] 수정 전 최초/이전 계획 이력:</strong>
+        ${plan.history.length === 0 ? '<div class="history-item">수정 이력이 없습니다.</div>' : ''}
+        ${plan.history.map((h, idx) => `
+          <div class="history-item">
+            #${idx + 1} (${h.updatedAt})<br>
+            - 내용: ${escapeHtml(h.text)}<br>
+            - 기간: ${escapeHtml(h.period)} | 우선순위: ${h.priority} | 성공기준: ${escapeHtml(h.criteria)} | 예상시간: ${escapeHtml(h.estTime)}
+          </div>
+        `).join('')}
+      </div>
     `;
     container.appendChild(card);
   });
 
+  // 이벤트 핸들러 바인딩
   container.querySelectorAll('[data-remove]').forEach(btn => {
     btn.onclick = async () => {
+      if (!confirm('정말 이 계획을 삭제하시겠습니까?')) return;
       const id = btn.dataset.remove;
       ensureDay(selectedDate).plans = ensureDay(selectedDate).plans.filter(p => p.id !== id);
       await persist();
       renderAll();
     };
   });
+
+  container.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.onclick = () => openEditModal(btn.dataset.edit);
+  });
+
+  container.querySelectorAll('[data-toggle-history]').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.toggleHistory;
+      const box = document.getElementById(`history-${id}`);
+      box.classList.toggle('open');
+    };
+  });
+
   container.querySelectorAll('[data-toggle]').forEach(btn => {
     btn.onclick = async () => {
       const id = btn.dataset.toggle;
@@ -305,6 +358,7 @@ function renderPlans() {
       renderAll();
     };
   });
+
   container.querySelectorAll('[data-note]').forEach(input => {
     input.oninput = () => {
       const id = input.dataset.note;
@@ -326,57 +380,57 @@ function renderReflection() {
   };
 }
 
-function computeStats() {
-  const allPlans = Object.keys(days).flatMap(d => (days[d].plans || []).map(p => ({ ...p, date: d })));
-  const doneCount = allPlans.filter(p => p.done === true).length;
-  const missedCount = allPlans.filter(p => p.done === false).length;
-  const total = allPlans.length;
-  const pending = total - doneCount - missedCount;
-  const rate = total ? Math.round((doneCount / total) * 100) : 0;
-  return { allPlans, doneCount, missedCount, pending, total, rate };
+function openEditModal(planId) {
+  const plan = ensureDay(selectedDate).plans.find(p => p.id === planId);
+  if (!plan) return;
+  editingPlanId = planId;
+  document.getElementById('editModalText').value = plan.text;
+  document.getElementById('editModalPeriod').value = plan.period;
+  document.getElementById('editModalPriority').value = plan.priority;
+  document.getElementById('editModalCriteria').value = plan.criteria;
+  document.getElementById('editModalEstTime').value = plan.estTime;
+  document.getElementById('editModal').classList.add('active');
 }
 
-function renderStats() {
-  const { doneCount, missedCount, pending, total, rate } = computeStats();
-  document.getElementById('rateNum').textContent = rate + '%';
-  document.getElementById('totalNum').textContent = `총 계획 ${total}건`;
-  document.getElementById('doneNum').textContent = doneCount;
-  document.getElementById('missedNum').textContent = missedCount;
-  document.getElementById('pendingNum').textContent = pending;
-}
+document.getElementById('modalCancelBtn').onclick = () => {
+  document.getElementById('editModal').classList.remove('active');
+  editingPlanId = null;
+};
 
-function renderDrill() {
-  const { allPlans } = computeStats();
-  const labelMap = { done: '완료한 일', missed: '못한 일', pending: '체크하지 않은 계획' };
-  let items = [];
-  if (currentDrillFilter === 'done') items = allPlans.filter(p => p.done === true);
-  else if (currentDrillFilter === 'missed') items = allPlans.filter(p => p.done === false);
-  else if (currentDrillFilter === 'pending') items = allPlans.filter(p => p.done === null);
-  items.sort((a, b) => b.date.localeCompare(a.date));
+document.getElementById('modalSaveBtn').onclick = async () => {
+  if (!editingPlanId) return;
+  const plan = ensureDay(selectedDate).plans.find(p => p.id === editingPlanId);
+  if (!plan) return;
 
-  document.getElementById('drillTitle').textContent = `${labelMap[currentDrillFilter]} (${items.length})`;
-  const container = document.getElementById('drillContainer');
-  container.innerHTML = '';
-  if (items.length === 0) {
-    container.innerHTML = '<p class="empty-hint">해당하는 기록이 없습니다.</p>';
+  const newText = document.getElementById('editModalText').value.trim();
+  if (!newText) {
+    alert('계획 내용을 입력해주세요.');
     return;
   }
-  items.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'drill-item';
-    div.innerHTML = `
-      <div class="drill-date">${fmtDate(item.date)}${item.time ? ' · ' + item.time : ''}</div>
-      <div class="drill-text">${escapeHtml(item.text)}</div>
-      ${item.actualNote ? `<div class="drill-note">메모: ${escapeHtml(item.actualNote)}</div>` : ''}
-    `;
-    div.onclick = () => {
-      selectedDate = item.date;
-      switchTab('day');
-      renderAll();
-    };
-    container.appendChild(div);
+
+  // T06-C08: 수정 전 기존 내용을 history에 백업
+  plan.history.push({
+    text: plan.text,
+    period: plan.period,
+    priority: plan.priority,
+    criteria: plan.criteria,
+    estTime: plan.estTime,
+    updatedAt: new Date().toLocaleString()
   });
-}
+
+  // 새로운 값으로 업데이트 (ID는 그대로 유지)
+  plan.text = newText;
+  plan.period = document.getElementById('editModalPeriod').value.trim();
+  plan.priority = document.getElementById('editModalPriority').value;
+  plan.criteria = document.getElementById('editModalCriteria').value.trim();
+  plan.estTime = document.getElementById('editModalEstTime').value.trim();
+
+  document.getElementById('editModal').classList.remove('active');
+  editingPlanId = null;
+
+  await persist();
+  renderAll();
+};
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -387,40 +441,42 @@ function escapeAttr(str) {
   return String(str).replace(/"/g, '&quot;');
 }
 
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-' + tab).classList.add('active');
-}
-
 function renderAll() {
   renderDateScroll();
   renderPlans();
   renderReflection();
-  renderStats();
 }
-
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.onclick = () => switchTab(btn.dataset.tab);
-});
 
 document.getElementById('addPlanBtn').onclick = async () => {
   const textInput = document.getElementById('newText');
-  const timeInput = document.getElementById('newTime');
+  const periodInput = document.getElementById('newPeriod');
+  const priorityInput = document.getElementById('newPriority');
+  const criteriaInput = document.getElementById('newCriteria');
+  const estTimeInput = document.getElementById('newEstTime');
+
   const text = textInput.value.trim();
-  const time = timeInput.value.trim();
-  
-  if (!text) return;
-  if (time && !/^\d{2}:\d{2}$/.test(time)) {
-    alert('시간 형식은 HH:MM (예: 09:00)으로 입력해 주세요.');
+  if (!text) {
+    alert('계획 내용을 입력해 주세요.');
     return;
   }
 
   ensureDay(selectedDate).plans.push({
-    id: uid(), text, time, done: null, actualNote: ''
+    id: uid(),
+    text,
+    period: periodInput.value.trim(),
+    priority: priorityInput.value,
+    criteria: criteriaInput.value.trim(),
+    estTime: estTimeInput.value.trim(),
+    done: null,
+    actualNote: '',
+    history: []
   });
+
   textInput.value = '';
-  timeInput.value = '';
+  periodInput.value = '';
+  criteriaInput.value = '';
+  estTimeInput.value = '';
+
   await persist();
   renderAll();
 };
@@ -428,17 +484,6 @@ document.getElementById('addPlanBtn').onclick = async () => {
 document.getElementById('newText').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('addPlanBtn').click();
 });
-
-document.querySelectorAll('[data-filter]').forEach(btn => {
-  btn.onclick = () => {
-    currentDrillFilter = btn.dataset.filter;
-    renderDrill();
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-drill').classList.add('active');
-  };
-});
-document.getElementById('drillBackBtn').onclick = () => switchTab('stats');
 
 (async function init() {
   await loadData();
