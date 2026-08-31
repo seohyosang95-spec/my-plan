@@ -41,13 +41,13 @@
   input[type=text], textarea {
     padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: inherit;
   }
-  .plan-form input[name=time] { width: 70px; }
+  .plan-form input[name=time] { width: 75px; }
   .plan-form input[name=text] { flex: 1; }
   .btn-add {
     padding: 8px 12px; background: #222; color: #fff; border: none; border-radius: 8px; cursor: pointer;
   }
   .empty-hint { font-size: 13px; color: #aaa; margin: 8px 0; }
-  .plan-card { border: 1px solid #eee; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .plan-card { border: 1px solid #eee; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fff; }
   .plan-row { display: flex; align-items: flex-start; gap: 8px; }
   .plan-text { flex: 1; font-size: 14px; font-weight: 500; }
   .plan-time { color: #999; font-weight: 400; margin-right: 6px; }
@@ -60,7 +60,7 @@
   .check-btn.done.active { border-color: #1D9E75; background: #E1F5EE; color: #0F6E56; }
   .check-btn.missed.active { border-color: #E24B4A; background: #FCEBEB; color: #A32D2D; }
   .note-input { width: 100%; margin-top: 8px; padding: 6px 8px; border: 1px solid #eee; border-radius: 6px; font-size: 12px; }
-  textarea.reflection { width: 100%; padding: 10px; border-radius: 8px; font-size: 13px; resize: vertical; }
+  textarea.reflection { width: 100%; padding: 10px; border-radius: 8px; font-size: 13px; resize: vertical; background: #fff; }
   .hint-small { font-size: 11px; color: #aaa; margin-top: 4px; }
   .stats-card { background: #f7f7f5; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center; }
   .stats-rate { font-size: 32px; font-weight: 700; margin: 4px 0; }
@@ -74,10 +74,11 @@
   .stat-box .num { font-size: 22px; font-weight: 700; }
   .stat-box .lab { font-size: 12px; }
   .drill-back { border: none; background: none; color: #888; font-size: 13px; margin-bottom: 12px; padding: 0; cursor: pointer; }
-  .drill-item { border: 1px solid #eee; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; }
+  .drill-item { border: 1px solid #eee; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; background: #fff; cursor: pointer; transition: background 0.1s; }
+  .drill-item:hover { background: #f9f9f6; }
   .drill-date { font-size: 12px; color: #999; }
-  .drill-text { font-size: 14px; }
-  .drill-note { font-size: 12px; color: #888; margin-top: 2px; }
+  .drill-text { font-size: 14px; font-weight: 500; margin-top: 2px; }
+  .drill-note { font-size: 12px; color: #888; margin-top: 4px; }
   .view { display: none; }
   .view.active { display: block; }
 </style>
@@ -88,10 +89,10 @@
 <p class="subtitle">계획(Plan) → 실행(Do) → 돌아보기(See)</p>
 
 <div class="banner">
-  이 페이지는 아직 로그인 기능이 없습니다. <b>이 링크를 아는 사람은 누구나 내용을 보고 편집할 수 있습니다.</b>
-  공개해도 괜찮은 내용만 기록해 주세요. 잠그는 기능은 이후 과제에서 추가됩니다.
+  이 페이지는 아직 로그인 기능이 없습니다[cite: 1]. <b>이 링크를 아는 사람은 누구나 보고 편집할 수 있습니다[cite: 1].</b>
+  공개해도 괜찮은 내용만 기록해 주세요[cite: 1]. 잠그는 기능은 이후 과제에서 추가됩니다[cite: 1].
 </div>
-<div class="banner error" id="saveError">저장에 실패했습니다. 네트워크를 확인하고 다시 시도해 주세요.</div>
+<div class="banner error" id="saveError">저장에 실패했습니다. 네트워크를 확인하고 다시 시도해 주세요[cite: 1].</div>
 
 <div class="tabs">
   <button class="tab-btn active" data-tab="day">오늘의 계획</button>
@@ -105,7 +106,7 @@
   <div class="section">
     <div class="section-head"><h2>계획 (Plan)</h2></div>
     <div class="plan-form">
-      <input type="text" name="time" id="newTime" placeholder="09:00">
+      <input type="text" name="time" id="newTime" placeholder="09:00" maxlength="5">
       <input type="text" name="text" id="newText" placeholder="예: 알고리즘 문제 2개 풀기">
       <button class="btn-add" id="addPlanBtn">+</button>
     </div>
@@ -115,7 +116,7 @@
   <div class="section">
     <div class="section-head"><h2>돌아보기 (See)</h2></div>
     <textarea class="reflection" id="reflectionBox" rows="4" placeholder="오늘 계획과 실제가 어디서 어긋났나요? 다음 계획에 반영할 점은?"></textarea>
-    <p class="hint-small">입력란에서 벗어나면 자동 저장됩니다.</p>
+    <p class="hint-small">입력 중 실시간 자동 저장됩니다.</p>
   </div>
 </div>
 
@@ -140,13 +141,14 @@
       <span class="lab" style="color:#666">체크 안 함</span>
     </button>
   </div>
-  <p class="hint-small" style="text-align:center; margin-top:12px;">숫자를 누르면 해당 기록 목록으로 이동합니다.</p>
+  <p class="hint-small" style="text-align:center; margin-top:12px;">숫자를 누르면 해당 기록 목록으로 이동합니다[cite: 1].</p>
 </div>
 
 <!-- DRILL VIEW -->
 <div class="view" id="view-drill">
   <button class="drill-back" id="drillBackBtn">← 집계로 돌아가기</button>
   <h2 id="drillTitle"></h2>
+  <p class="hint-small" style="margin-bottom: 10px;">항목을 누르면 해당 날짜의 계획 화면으로 이동합니다.</p>
   <div id="drillContainer"></div>
 </div>
 
@@ -154,13 +156,8 @@
 /*
   ============================================================
   저장소 안내:
-  지금은 브라우저 localStorage로 저장합니다 (이 컴퓨터, 이 브라우저에만 남음).
-  실제 과제 제출용 "서버의 실제 데이터베이스"로 바꾸려면,
-  아래 STORAGE 객체의 get/set 두 함수만 Supabase 호출로 교체하면 됩니다.
-  예)
-    async function get() { return (await supabase.from('entries').select()).data }
-    async function set(data) { await supabase.from('entries').upsert(data) }
-  나머지 화면 코드는 전혀 건드릴 필요가 없습니다.
+  현재는 브라우저 localStorage를 사용하며[cite: 1], 추후 Supabase 등
+  서버 DB 연동 시 STORAGE 객체의 get/set 함수만 교체하면 됩니다[cite: 1].
   ============================================================
 */
 const STORAGE_KEY = 'plandosee:entries';
@@ -180,7 +177,7 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 function today() { return new Date().toISOString().slice(0, 10); }
 function fmtDate(d) {
   const dt = new Date(d + 'T00:00:00');
-  return dt.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
+  return isNaN(dt) ? d : dt.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
 }
 
 function buildSeedData() {
@@ -194,7 +191,7 @@ function buildSeedData() {
         { id: uid(), time: '14:00', text: '데이터 모델(Plan/Do/See) 설계', done: true, actualNote: '' },
         { id: uid(), time: '20:00', text: '운동 30분', done: false, actualNote: '야근으로 못함' },
       ],
-      reflection: '오전 작업은 예상보다 시간이 더 걸렸다. 다음엔 준비 시간을 15분 더 넉넉히 잡자. 저녁 계획은 야근 가능성을 고려하지 않았음 — 저녁 일정은 유동적으로 잡을 것.'
+      reflection: '오전 작업은 예상보다 시간이 더 걸렸다. 다음엔 준비 시간을 15분 더 넉넉히 잡자.'
     },
     [t]: {
       plans: [
@@ -209,6 +206,7 @@ function buildSeedData() {
 let days = {};
 let selectedDate = today();
 let currentDrillFilter = null;
+let saveTimeout = null;
 
 async function loadData() {
   let data = await STORAGE.get();
@@ -228,6 +226,13 @@ async function persist() {
     console.error(e);
     document.getElementById('saveError').style.display = 'block';
   }
+}
+
+function debouncedPersist() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    await persist();
+  }, 400);
 }
 
 function ensureDay(date) {
@@ -252,6 +257,7 @@ function renderDateScroll() {
   addChip.onclick = () => {
     const nd = prompt('YYYY-MM-DD 형식으로 날짜를 입력하세요', today());
     if (nd && /^\d{4}-\d{2}-\d{2}$/.test(nd)) { selectedDate = nd; renderAll(); }
+    else if (nd) alert('올바른 날짜 형식(YYYY-MM-DD)이 아닙니다.');
   };
   scroll.appendChild(addChip);
 }
@@ -270,7 +276,7 @@ function renderPlans() {
     card.innerHTML = `
       <div class="plan-row">
         <div class="plan-text">${plan.time ? `<span class="plan-time">${plan.time}</span>` : ''}${escapeHtml(plan.text)}</div>
-        <button class="btn-remove" data-remove="${plan.id}">×</button>
+        <button class="btn-remove" data-remove="${plan.id}" title="삭제">×</button>
       </div>
       <div class="check-row">
         <button class="check-btn done ${plan.done === true ? 'active' : ''}" data-toggle="${plan.id}" data-value="true">했음</button>
@@ -300,11 +306,13 @@ function renderPlans() {
     };
   });
   container.querySelectorAll('[data-note]').forEach(input => {
-    input.onblur = async () => {
+    input.oninput = () => {
       const id = input.dataset.note;
       const plan = ensureDay(selectedDate).plans.find(p => p.id === id);
-      plan.actualNote = input.value;
-      await persist();
+      if (plan) {
+        plan.actualNote = input.value;
+        debouncedPersist();
+      }
     };
   });
 }
@@ -312,9 +320,9 @@ function renderPlans() {
 function renderReflection() {
   const box = document.getElementById('reflectionBox');
   box.value = ensureDay(selectedDate).reflection || '';
-  box.onblur = async () => {
+  box.oninput = () => {
     ensureDay(selectedDate).reflection = box.value;
-    await persist();
+    debouncedPersist();
   };
 }
 
@@ -361,6 +369,11 @@ function renderDrill() {
       <div class="drill-text">${escapeHtml(item.text)}</div>
       ${item.actualNote ? `<div class="drill-note">메모: ${escapeHtml(item.actualNote)}</div>` : ''}
     `;
+    div.onclick = () => {
+      selectedDate = item.date;
+      switchTab('day');
+      renderAll();
+    };
     container.appendChild(div);
   });
 }
@@ -394,16 +407,24 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 document.getElementById('addPlanBtn').onclick = async () => {
   const textInput = document.getElementById('newText');
   const timeInput = document.getElementById('newTime');
-  if (!textInput.value.trim()) return;
+  const text = textInput.value.trim();
+  const time = timeInput.value.trim();
+  
+  if (!text) return;
+  if (time && !/^\d{2}:\d{2}$/.test(time)) {
+    alert('시간 형식은 HH:MM (예: 09:00)으로 입력해 주세요.');
+    return;
+  }
+
   ensureDay(selectedDate).plans.push({
-    id: uid(), text: textInput.value.trim(), time: timeInput.value.trim(),
-    done: null, actualNote: ''
+    id: uid(), text, time, done: null, actualNote: ''
   });
   textInput.value = '';
   timeInput.value = '';
   await persist();
   renderAll();
 };
+
 document.getElementById('newText').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('addPlanBtn').click();
 });
