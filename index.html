@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>플랜두씨 다이어리</title>
+<title>플랜두씨 다이어리 - 최종 완성본</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -98,6 +98,12 @@
   textarea.reflection { width: 100%; padding: 12px; border-radius: 8px; font-size: 13px; resize: vertical; background: #fff; border: 1px solid #d1d5db; line-height: 1.5; }
   .hint-small { font-size: 11px; color: #9ca3af; margin-top: 4px; }
   
+  /* Summary Drilldown Styles */
+  .summary-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .summary-stat { font-size: 16px; font-weight: 700; color: #4f46e5; cursor: pointer; text-decoration: underline; }
+  .drilldown-item { background: #fff; border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .drilldown-item:hover { background: #f3f4f6; }
+
   /* Modal */
   .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100; }
   .modal-overlay.active { display: flex; }
@@ -116,12 +122,13 @@
   <p class="subtitle">계획하고(Plan), 실행한 뒤(Do), 돌아보기(See)</p>
 
   <div class="banner">
-    아직 로그인 기능이 없습니다. <b>이 링크를 아는 사람은 누구나 보고 수정할 수 있습니다.</b> 안전한 내용만 적어주세요!
+    아직 로그인이 없습니다. <b>이 링크를 아는 사람은 누구나 보고 수정할 수 있습니다.</b> 안전한 내용만 적어주세요!
   </div>
   <div class="banner error" id="saveError">저장에 실패했습니다. 인터넷 연결을 확인해 주세요.</div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="day">오늘의 계획</button>
+    <button class="tab-btn active" data-tab="day" onclick="switchTab('day')">오늘의 계획</button>
+    <button class="tab-btn" data-tab="summary" onclick="switchTab('summary')">집계 및 통계</button>
   </div>
 
   <!-- DAY VIEW -->
@@ -159,6 +166,30 @@
       <p class="hint-small">글을 쓰면 자동으로 저장됩니다.</p>
     </div>
   </div>
+
+  <!-- SUMMARY VIEW (DRILLDOWN) -->
+  <div class="view" id="view-summary">
+    <div class="section">
+      <div class="section-head"><h2>전체 계획 집계</h2></div>
+      <div class="summary-card">
+        <div>등록된 전체 계획</div>
+        <div class="summary-stat" id="statTotal" onclick="filterDrilldown('all')">0개</div>
+      </div>
+      <div class="summary-card">
+        <div>성공적으로 완료한 계획</div>
+        <div class="summary-stat" id="statDone" onclick="filterDrilldown('done')">0개</div>
+      </div>
+      <div class="summary-card">
+        <div>아직 못 한 계획</div>
+        <div class="summary-stat" id="statMissed" onclick="filterDrilldown('missed')">0개</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2 id="drilldownTitle">상세 기록 (숫자를 누르면 해당 날짜로 이동합니다)</h2></div>
+      <div id="drilldownContainer"></div>
+    </div>
+  </div>
 </div>
 
 <!-- EDIT MODAL -->
@@ -194,15 +225,15 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'plandosee:entries:v3';
-
+// 서버 연동(Supabase 등) 구조로 확장 가능한 비동기 스토리지 레이어
 const STORAGE = {
   async get() {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem('plandosee:entries:v4');
     return raw ? JSON.parse(raw) : null;
   },
   async set(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // 실제 서버 DB 연동 시 이곳에 fetch 또는 supabase.from(...).upsert(...) 코드가 들어갑니다.
+    localStorage.setItem('plandosee:entries:v4', JSON.stringify(data));
     return true;
   }
 };
@@ -238,6 +269,8 @@ function buildSeedData() {
 
 let days = {};
 let selectedDate = today();
+let currentTab = 'day';
+let drilldownFilter = 'all';
 let saveTimeout = null;
 let editingPlanId = null;
 
@@ -269,6 +302,18 @@ function debouncedPersist() {
 function ensureDay(date) {
   if (!days[date]) days[date] = { plans: [], reflection: '' };
   return days[date];
+}
+
+function switchTab(tabName) {
+  currentTab = tabName;
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+  document.querySelectorAll('.view').forEach(view => {
+    view.classList.toggle('active', view.id === `view-${tabName}`);
+  });
+  if (tabName === 'summary') renderSummary();
+  else renderAll();
 }
 
 function renderDateScroll() {
@@ -401,6 +446,74 @@ function renderReflection() {
     ensureDay(selectedDate).reflection = box.value;
     debouncedPersist();
   };
+}
+
+function renderSummary() {
+  let totalCount = 0;
+  let doneCount = 0;
+  let missedCount = 0;
+  let allPlans = [];
+
+  Object.keys(days).forEach(date => {
+    (days[date].plans || []).forEach(plan => {
+      totalCount++;
+      if (plan.done === true) doneCount++;
+      if (plan.done === false) missedCount++;
+      allPlans.push({ ...plan, date });
+    });
+  });
+
+  document.getElementById('statTotal').textContent = `${totalCount}개`;
+  document.getElementById('statDone').textContent = `${doneCount}개`;
+  document.getElementById('statMissed').textContent = `${missedCount}개`;
+
+  renderDrilldownList(allPlans);
+}
+
+function filterDrilldown(type) {
+  drilldownFilter = type;
+  let allPlans = [];
+  Object.keys(days).forEach(date => {
+    (days[date].plans || []).forEach(plan => {
+      if (type === 'all' || (type === 'done' && plan.done === true) || (type === 'missed' && plan.done === false)) {
+        allPlans.push({ ...plan, date });
+      }
+    });
+  });
+  renderDrilldownList(allPlans);
+}
+
+function renderDrilldownList(plans) {
+  const container = document.getElementById('drilldownContainer');
+  container.innerHTML = '';
+  if (plans.length === 0) {
+    container.innerHTML = '<div class="empty-hint">조건에 해당하는 기록이 없습니다.</div>';
+    return;
+  }
+
+  plans.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'drilldown-item';
+    let statusText = '진행 전';
+    if (p.done === true) statusText = '했어요';
+    if (p.done === false) statusText = '못했어요';
+
+    item.innerHTML = `
+      <div>
+        <div style="font-size:12px; color:#4f46e5; font-weight:600; margin-bottom:2px;">📅 ${p.date}</div>
+        <div style="font-size:14px; font-weight:600; color:#1f2937;">${escapeHtml(p.text)}</div>
+      </div>
+      <div style="text-align:right;">
+        <span class="badge">${statusText}</span>
+      </div>
+    `;
+    // 드릴다운: 항목을 누르면 해당 날짜의 계획 화면으로 이동
+    item.onclick = () => {
+      selectedDate = p.date;
+      switchTab('day');
+    };
+    container.appendChild(item);
+  });
 }
 
 function openEditModal(planId) {
