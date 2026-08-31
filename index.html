@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>플랜두씨 다이어리 - 최종 완성본</title>
+<title>플랜두씨 다이어리 - Supabase 서버 연동 버전</title>
+<!-- Supabase CDN 추가 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -22,7 +24,11 @@
     padding: 24px;
   }
   h1 { font-size: 24px; font-weight: 700; margin: 0; color: #1a1a1a; }
-  .subtitle { font-size: 13px; color: #666; margin: 6px 0 20px; }
+  .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .subtitle { font-size: 13px; color: #666; margin: 6px 0 0; }
+  
+  .auth-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .auth-box input { padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; flex: 1; min-width: 140px; }
   
   .banner {
     background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px;
@@ -51,7 +57,7 @@
   
   .plan-form-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
   .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  input[type=text], select, textarea {
+  input[type=text], input[type=password], select, textarea {
     padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; color: #1f2937;
   }
   .form-row input[name=text] { flex: 2; min-width: 180px; }
@@ -98,9 +104,11 @@
   textarea.reflection { width: 100%; padding: 12px; border-radius: 8px; font-size: 13px; resize: vertical; background: #fff; border: 1px solid #d1d5db; line-height: 1.5; }
   .hint-small { font-size: 11px; color: #9ca3af; margin-top: 4px; }
   
-  /* Summary Drilldown Styles */
+  /* Summary & Filter Styles */
   .summary-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-  .summary-stat { font-size: 16px; font-weight: 700; color: #4f46e5; cursor: pointer; text-decoration: underline; }
+  .summary-stat { font-size: 16px; font-weight: 700; color: #4f46e5; cursor: pointer; text-decoration: underline; padding: 4px 8px; border-radius: 6px; }
+  .summary-stat.active-filter { background: #eef2ff; }
+  
   .drilldown-item { background: #fff; border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
   .drilldown-item:hover { background: #f3f4f6; }
 
@@ -118,13 +126,27 @@
 <body>
 
 <div class="app-container">
-  <h1>플랜두씨 다이어리</h1>
-  <p class="subtitle">계획하고(Plan), 실행한 뒤(Do), 돌아보기(See)</p>
-
-  <div class="banner">
-    아직 로그인이 없습니다. <b>이 링크를 아는 사람은 누구나 보고 수정할 수 있습니다.</b> 안전한 내용만 적어주세요!
+  <div class="header-flex">
+    <div>
+      <h1>플랜두씨 다이어리</h1>
+      <p class="subtitle">계획하고(Plan), 실행한 뒤(Do), 돌아보기(See)</p>
+    </div>
+    <div id="authStatusArea" style="font-size: 12px; color: #666;"></div>
   </div>
-  <div class="banner error" id="saveError">저장에 실패했습니다. 인터넷 연결을 확인해 주세요.</div>
+
+  <!-- 로그인 영역 (Supabase Auth 연동) -->
+  <div class="auth-box" id="authBox">
+    <span style="font-size: 13px; font-weight: 600; color: #333;">로그인하기:</span>
+    <input type="text" id="authEmail" placeholder="이메일 입력">
+    <input type="password" id="authPassword" placeholder="비밀번호 입력">
+    <button class="btn-action" id="loginBtn" style="background:#4f46e5; color:#fff; border:none;">로그인</button>
+    <button class="btn-action" id="signupBtn">회원가입</button>
+  </div>
+
+  <div class="banner" id="loginNotice">
+    현재 로그인 정보가 없습니다. 로그인하면 <b>서버 데이터베이스</b>에 안전하게 내 기록이 저장됩니다.
+  </div>
+  <div class="banner error" id="saveError">서버 저장에 실패했습니다. 네트워크를 확인해 주세요.</div>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="day" onclick="switchTab('day')">오늘의 계획</button>
@@ -163,7 +185,7 @@
     <div class="section">
       <div class="section-head"><h2>하루 돌아보기</h2></div>
       <textarea class="reflection" id="reflectionBox" rows="4" placeholder="오늘 어땠나요? 잘된 점이나 아쉬운 점을 자유롭게 적어보세요."></textarea>
-      <p class="hint-small">글을 쓰면 자동으로 저장됩니다.</p>
+      <p class="hint-small">글을 쓰면 서버에 자동으로 저장됩니다.</p>
     </div>
   </div>
 
@@ -173,7 +195,7 @@
       <div class="section-head"><h2>전체 계획 집계</h2></div>
       <div class="summary-card">
         <div>등록된 전체 계획</div>
-        <div class="summary-stat" id="statTotal" onclick="filterDrilldown('all')">0개</div>
+        <div class="summary-stat active-filter" id="statTotal" onclick="filterDrilldown('all')">0개</div>
       </div>
       <div class="summary-card">
         <div>성공적으로 완료한 계획</div>
@@ -225,18 +247,18 @@
 </div>
 
 <script>
-// 서버 연동(Supabase 등) 구조로 확장 가능한 비동기 스토리지 레이어
-const STORAGE = {
-  async get() {
-    const raw = localStorage.getItem('plandosee:entries:v4');
-    return raw ? JSON.parse(raw) : null;
-  },
-  async set(data) {
-    // 실제 서버 DB 연동 시 이곳에 fetch 또는 supabase.from(...).upsert(...) 코드가 들어갑니다.
-    localStorage.setItem('plandosee:entries:v4', JSON.stringify(data));
-    return true;
-  }
-};
+// Supabase 설정 (사용하시는 프로젝트 정보로 교체해 주세요)
+const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT.supabase.co';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let days = {};
+let selectedDate = today();
+let currentTab = 'day';
+let drilldownFilter = 'all';
+let saveTimeout = null;
+let editingPlanId = null;
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -267,31 +289,94 @@ function buildSeedData() {
   };
 }
 
-let days = {};
-let selectedDate = today();
-let currentTab = 'day';
-let drilldownFilter = 'all';
-let saveTimeout = null;
-let editingPlanId = null;
+// Supabase DB 연동 스토리지 레이어
+const STORAGE = {
+  async get() {
+    if (!currentUser) {
+      // 로그인 안 된 경우 로컬 임시 저장소 사용
+      const raw = localStorage.getItem('plandosee:guest');
+      return raw ? JSON.parse(raw) : buildSeedData();
+    }
+    try {
+      const { data, error } = await supabaseClient
+        .from('diaries')
+        .select('content')
+        .eq('user_id', currentUser.id)
+        .single();
+      if (error || !data) return buildSeedData();
+      return data.content;
+    } catch (e) {
+      console.error(e);
+      return buildSeedData();
+    }
+  },
+  async set(data) {
+    if (!currentUser) {
+      localStorage.setItem('plandosee:guest', JSON.stringify(data));
+      return true;
+    }
+    try {
+      const { error } = await supabaseClient
+        .from('diaries')
+        .upsert({ user_id: currentUser.id, content: data, updated_at: new Date() });
+      if (error) throw error;
+      document.getElementById('saveError').style.display = 'none';
+      return true;
+    } catch (e) {
+      console.error(e);
+      document.getElementById('saveError').style.display = 'block';
+      return false;
+    }
+  }
+};
+
+async function checkAuth() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  currentUser = session ? session.user : null;
+  const authStatusArea = document.getElementById('authStatusArea');
+  const authBox = document.getElementById('authBox');
+  const loginNotice = document.getElementById('loginNotice');
+
+  if (currentUser) {
+    authBox.style.display = 'none';
+    loginNotice.style.display = 'none';
+    authStatusArea.innerHTML = `<b>${currentUser.email}</b>님 접속 중 <button class="btn-action" id="logoutBtn" style="margin-left:6px;">로그아웃</button>`;
+    document.getElementById('logoutBtn').onclick = async () => {
+      await supabaseClient.auth.signOut();
+      window.location.reload();
+    };
+  } else {
+    authBox.style.display = 'flex';
+    loginNotice.style.display = 'block';
+    authStatusArea.innerHTML = '로그인되지 않음';
+  }
+}
+
+document.getElementById('loginBtn').onclick = async () => {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  if (!email || !password) { alert('이메일과 비밀번호를 입력해주세요.'); return; }
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) alert('로그인 실패: ' + error.message);
+  else { alert('로그인 성공!'); window.location.reload(); }
+};
+
+document.getElementById('signupBtn').onclick = async () => {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  if (!email || !password) { alert('이메일과 비밀번호를 입력해주세요.'); return; }
+  const { error } = await supabaseClient.auth.signUp({ email, password });
+  if (error) alert('회원가입 실패: ' + error.message);
+  else alert('회원가입 완료! 이메일 인증 후 로그인해주세요.');
+};
 
 async function loadData() {
-  let data = await STORAGE.get();
-  if (!data) {
-    data = buildSeedData();
-    await STORAGE.set(data);
-  }
-  days = data;
+  await checkAuth();
+  days = await STORAGE.get();
 }
 
 async function persist() {
-  try {
-    const ok = await STORAGE.set(days);
-    if (!ok) throw new Error('save failed');
-    document.getElementById('saveError').style.display = 'none';
-  } catch (e) {
-    console.error(e);
-    document.getElementById('saveError').style.display = 'block';
-  }
+  await STORAGE.set(days);
 }
 
 function debouncedPersist() {
@@ -380,7 +465,7 @@ function renderPlans() {
       ${plan.done !== null ? `<input type="text" class="note-input" data-note="${plan.id}" value="${escapeAttr(plan.actualNote || '')}" placeholder="${plan.done ? '어떻게 실행했나요? 짧게 적어보세요' : '왜 못했는지 적어보세요'}">` : ''}
 
       <div class="history-box" id="history-${plan.id}">
-        <strong>고치기 전 이력:</strong>
+        <b>고치기 전 이력:</b>
         ${plan.history.length === 0 ? '<div class="history-item" style="margin-top:4px;">아직 수정된 적이 없습니다.</div>' : ''}
         ${plan.history.map((h, idx) => `
           <div class="history-item">
@@ -459,7 +544,9 @@ function renderSummary() {
       totalCount++;
       if (plan.done === true) doneCount++;
       if (plan.done === false) missedCount++;
-      allPlans.push({ ...plan, date });
+      if (drilldownFilter === 'all' || (drilldownFilter === 'done' && plan.done === true) || (drilldownFilter === 'missed' && plan.done === false)) {
+        allPlans.push({ ...plan, date });
+      }
     });
   });
 
@@ -467,20 +554,16 @@ function renderSummary() {
   document.getElementById('statDone').textContent = `${doneCount}개`;
   document.getElementById('statMissed').textContent = `${missedCount}개`;
 
+  document.getElementById('statTotal').classList.toggle('active-filter', drilldownFilter === 'all');
+  document.getElementById('statDone').classList.toggle('active-filter', drilldownFilter === 'done');
+  document.getElementById('statMissed').classList.toggle('active-filter', drilldownFilter === 'missed');
+
   renderDrilldownList(allPlans);
 }
 
 function filterDrilldown(type) {
   drilldownFilter = type;
-  let allPlans = [];
-  Object.keys(days).forEach(date => {
-    (days[date].plans || []).forEach(plan => {
-      if (type === 'all' || (type === 'done' && plan.done === true) || (type === 'missed' && plan.done === false)) {
-        allPlans.push({ ...plan, date });
-      }
-    });
-  });
-  renderDrilldownList(allPlans);
+  renderSummary();
 }
 
 function renderDrilldownList(plans) {
@@ -507,7 +590,6 @@ function renderDrilldownList(plans) {
         <span class="badge">${statusText}</span>
       </div>
     `;
-    // 드릴다운: 항목을 누르면 해당 날짜의 계획 화면으로 이동
     item.onclick = () => {
       selectedDate = p.date;
       switchTab('day');
