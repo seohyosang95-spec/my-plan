@@ -69,11 +69,33 @@
         li.completed span.text { text-decoration: line-through; color: #b5aca6; }
         .li-left { display: flex; align-items: center; gap: 12px; flex-grow: 1; }
         input[type="checkbox"] { width: 20px; height: 20px; accent-color: #bfa181; cursor: pointer; margin: 0; }
+        
         .delete-btn { background-color: #d99b9b; width: auto; padding: 6px 12px; font-size: 0.9em; border-radius: 6px; }
         .delete-btn:hover { background-color: #c48282; }
+
+        /* 돌아보기 목록 스타일 */
+        .review-item {
+            background: #faf6f0;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 10px;
+            border: 1px solid #f0e6da;
+        }
+        .review-item .review-date {
+            font-weight: bold;
+            color: #8c7355;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .review-item .review-content {
+            white-space: pre-wrap;
+            color: #4a403a;
+        }
+
         .stats { display: flex; justify-content: space-around; text-align: center; }
         .stats div div:last-child { font-size: 1.8em; font-weight: bold; color: #6b4f3b; margin-top: 8px; }
-        .review-hint { font-size: 0.85em; color: #a39587; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -102,9 +124,16 @@
 
     <!-- 하루 돌아보기 -->
     <div class="card">
-        <h2>하루 돌아보기</h2>
-        <textarea id="dailyReview" rows="4" placeholder="오늘 하루를 돌아보며 적어보세요 (자동 저장됩니다)"></textarea>
-        <div class="review-hint">글을 쓰면 자동으로 저장됩니다.</div>
+        <h2>하루 돌아보기 작성</h2>
+        <input type="date" id="reviewDate">
+        <textarea id="dailyReviewText" rows="4" placeholder="오늘 하루를 돌아보며 적어보세요"></textarea>
+        <button onclick="saveReview()">돌아보기 저장하기</button>
+    </div>
+
+    <!-- 지난 하루 돌아보기 목록 -->
+    <div class="card">
+        <h2>지난 돌아보기 기록</h2>
+        <div id="reviewList"></div>
     </div>
 
     <!-- 전체 계획 집계 -->
@@ -127,16 +156,17 @@
     </div>
 
     <script>
+        // 데이터 불러오기
         let plans = JSON.parse(localStorage.getItem('plans')) || [];
-        let review = localStorage.getItem('review') || '';
+        let reviews = JSON.parse(localStorage.getItem('reviews')) || [];
 
-        document.getElementById('dailyReview').value = review;
+        // 오늘 날짜를 기본값으로 설정
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('planDate').value = todayStr;
+        document.getElementById('reviewDate').value = todayStr;
 
-        document.getElementById('dailyReview').addEventListener('input', (e) => {
-            localStorage.setItem('review', e.target.value);
-        });
-
-        function saveAndRender() {
+        // --- 계획 관련 함수 ---
+        function saveAndRenderPlans() {
             localStorage.setItem('plans', JSON.stringify(plans));
             renderPlans();
         }
@@ -161,18 +191,17 @@
 
             plans.push(newPlan);
             textInput.value = '';
-            dateInput.value = '';
-            saveAndRender();
+            saveAndRenderPlans();
         }
 
         function togglePlan(id) {
             plans = plans.map(p => p.id === id ? { ...p, completed: !p.completed } : p);
-            saveAndRender();
+            saveAndRenderPlans();
         }
 
         function deletePlan(id) {
             plans = plans.filter(p => p.id !== id);
-            saveAndRender();
+            saveAndRenderPlans();
         }
 
         function renderPlans() {
@@ -202,7 +231,68 @@
             document.getElementById('pendingCount').innerText = (plans.length - completed) + '개';
         }
 
+        // --- 하루 돌아보기 관련 함수 ---
+        function saveReview() {
+            const dateInput = document.getElementById('reviewDate').value;
+            const textInput = document.getElementById('dailyReviewText').value;
+
+            if (!dateInput) {
+                alert('날짜를 선택해주세요.');
+                return;
+            }
+            if (!textInput.trim()) {
+                alert('돌아보기 내용을 입력해주세요.');
+                return;
+            }
+
+            // 이미 해당 날짜의 기록이 있다면 덮어쓰기, 없으면 새로 추가
+            const existingIndex = reviews.findIndex(r => r.date === dateInput);
+            if (existingIndex >= 0) {
+                reviews[existingIndex].content = textInput;
+            } else {
+                reviews.push({ id: Date.now(), date: dateInput, content: textInput });
+                // 날짜 최신순 정렬
+                reviews.sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+
+            localStorage.setItem('reviews', JSON.stringify(reviews));
+            document.getElementById('dailyReviewText').value = '';
+            renderReviews();
+            alert('돌아기가 저장되었습니다.');
+        }
+
+        function deleteReview(id) {
+            reviews = reviews.filter(r => r.id !== id);
+            localStorage.setItem('reviews', JSON.stringify(reviews));
+            renderReviews();
+        }
+
+        function renderReviews() {
+            const reviewListEl = document.getElementById('reviewList');
+            reviewListEl.innerHTML = '';
+
+            if (reviews.length === 0) {
+                reviewListEl.innerHTML = '<p style="text-align: center; color: #a39587; margin: 10px 0;">아직 작성된 돌아보기 기록이 없습니다.</p>';
+                return;
+            }
+
+            reviews.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'review-item';
+                div.innerHTML = `
+                    <div class="review-date">
+                        <span>📅 ${r.date}</span>
+                        <button class="delete-btn" onclick="deleteReview(${r.id})">삭제</button>
+                    </div>
+                    <div class="review-content">${r.content}</div>
+                `;
+                reviewListEl.appendChild(div);
+            });
+        }
+
+        // 초기 렌더링 실행
         renderPlans();
+        renderReviews();
     </script>
 </body>
 </html>
