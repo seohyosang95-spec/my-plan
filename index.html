@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>플랜두씨 다이어리 - 통합 시스템</title>
+    <title>플랜두씨 다이어리</title>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #fdfbf7 0%, #f4eee1 100%);
@@ -23,29 +23,40 @@
             --tag-text: #6b4f3b;
             --sub-text: #a39587;
         }
+
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #1f1b18 0%, #2c2621 100%);
+            --text-color: #e6dfd5;
+            --title-color: #f4eee1;
+            --subtitle-color: #c2b29f;
+            --card-bg: #28221e;
+            --card-border: #3d342d;
+            --input-bg: #322b25;
+            --input-border: #4d4239;
+            --input-text: #e6dfd5;
+            --btn-bg: #9c8b7c;
+            --btn-hover: #bfa181;
+            --li-bg: #322b25;
+            --li-border: #3d342d;
+            --tag-bg: #41372f;
+            --tag-text: #e6dfd5;
+            --sub-text: #8c7355;
+        }
+
         body { 
             font-family: 'Malgun Gothic', sans-serif; 
-            max-width: 950px; 
+            max-width: 800px; 
             margin: 0 auto; 
             padding: 30px 20px; 
             background: var(--bg-gradient); 
             color: var(--text-color); 
             min-height: 100vh;
-        }
-        .notice-banner {
-            background-color: #fcf3cf;
-            color: #7d6608;
-            border: 1px solid #f9e79f;
-            padding: 12px 15px;
-            border-radius: 8px;
-            font-size: 0.95em;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-align: center;
+            transition: background 0.3s, color 0.3s;
         }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         h1 { text-align: center; color: var(--title-color); font-size: 2.2em; margin: 0; flex-grow: 1; }
-        .subtitle { text-align: center; color: var(--subtitle-color); margin-bottom: 25px; font-size: 1.1em; }
+        .theme-toggle-btn { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 5px; width: auto; }
+        .subtitle { text-align: center; color: var(--subtitle-color); margin-bottom: 35px; font-size: 1.1em; }
         .card { 
             background: var(--card-bg); 
             padding: 25px; 
@@ -53,283 +64,397 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); 
             margin-bottom: 25px; 
             border: 1px solid var(--card-border);
+            transition: background 0.3s, border 0.3s;
         }
-        h2 { color: var(--title-color); font-size: 1.3em; margin-top: 0; border-bottom: 2px solid var(--card-border); padding-bottom: 10px; }
+        h2 { color: var(--title-color); font-size: 1.3em; margin-top: 0; border-bottom: 2px solid var(--card-border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         input, select, textarea { 
-            padding: 10px 12px; 
-            margin: 6px 0; 
+            padding: 12px; 
+            margin: 8px 0; 
             width: calc(100% - 24px); 
             box-sizing: border-box; 
             border: 1px solid var(--input-border); 
             border-radius: 8px; 
             background-color: var(--input-bg);
             color: var(--input-text);
-            font-size: 0.95em;
+            font-size: 1em;
+            transition: background 0.3s, border 0.3s, color 0.3s;
         }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--btn-hover);
+        }
+        .row-group { display: flex; gap: 10px; }
+        .row-group select, .row-group input { width: 50%; }
+        
         button { 
             background-color: var(--btn-bg); 
             color: white; 
             border: none; 
-            padding: 10px 15px; 
+            padding: 12px 15px; 
             border-radius: 8px; 
             cursor: pointer; 
             width: 100%; 
             font-weight: bold; 
-            font-size: 1em;
+            font-size: 1.05em;
+            transition: background 0.2s;
             margin-top: 5px;
         }
         button:hover { background-color: var(--btn-hover); }
+        
         ul { list-style: none; padding: 0; }
         li { 
             display: flex; 
-            flex-direction: column;
+            align-items: center; 
+            justify-content: space-between; 
             background: var(--li-bg); 
             padding: 12px 15px; 
             margin-top: 10px; 
             border-radius: 10px; 
             border: 1px solid var(--li-border);
+            transition: background 0.3s, border 0.3s;
         }
-        .li-main { display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px; }
-        .analytics-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
-        .analytics-table th, .analytics-table td { border: 1px solid var(--input-border); padding: 8px 10px; text-align: center; }
-        .analytics-table th { background-color: var(--input-bg); color: var(--title-color); }
-        .tag-badge { background-color: var(--tag-bg); color: var(--tag-text); padding: 3px 8px; border-radius: 6px; font-size: 0.8em; font-weight: bold; }
-        .review-result-box { background: var(--li-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--li-border); min-height: 80px; white-space: pre-wrap; }
+        li.completed span.text { text-decoration: line-through; opacity: 0.5; }
+        .li-left { display: flex; align-items: center; gap: 10px; flex-grow: 1; overflow: hidden; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--btn-bg); cursor: pointer; margin: 0; flex-shrink: 0; }
+        
+        .tag-badge {
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .btn-group { display: flex; gap: 5px; flex-shrink: 0; }
+        .action-btn { background-color: var(--subtitle-color); width: auto; padding: 6px 10px; font-size: 0.85em; border-radius: 6px; margin: 0; color: white; }
+        .action-btn:hover { background-color: var(--btn-hover); }
+        .delete-btn { background-color: #d99b9b; width: auto; padding: 6px 10px; font-size: 0.85em; border-radius: 6px; margin: 0; color: white; }
+        .delete-btn:hover { background-color: #c48282; }
+
+        .filter-container { font-size: 0.85em; color: var(--subtitle-color); font-weight: normal; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .filter-container label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        .filter-container input { width: 16px; height: 16px; margin: 0; }
+
+        .search-box { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
+        .search-box input { margin: 0; flex-grow: 1; }
+        .search-box button { width: auto; margin: 0; padding: 12px 20px; white-space: nowrap; }
+        .review-result-box { background: var(--li-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--li-border); min-height: 80px; }
+        .review-content-text { white-space: pre-wrap; margin-bottom: 10px; }
+        .review-actions { display: flex; gap: 5px; justify-content: flex-end; }
+
+        .backup-group { display: flex; gap: 10px; margin-top: 10px; }
+        .backup-group button { background-color: var(--sub-text); font-size: 0.9em; padding: 8px; }
+
+        .stats { display: flex; justify-content: space-around; text-align: center; }
+        .stats div div:last-child { font-size: 1.8em; font-weight: bold; color: var(--title-color); margin-top: 8px; }
     </style>
 </head>
-<body>
-
-    <!-- 공개 안내 문구 (T06-C82) -->
-    <div class="notice-banner">
-        ⚠️ 지금은 로그인이 없어 링크를 아는 사람은 누구나 볼 수 있습니다. 남이 봐도 괜찮은 내용만 넣으세요.
-    </div>
+<body data-theme="light">
 
     <div class="header-container">
+        <div style="width: 40px;"></div>
         <h1>플랜두씨 다이어리</h1>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="테마 변경">🌙</button>
     </div>
     <p class="subtitle">계획하고(Plan), 실행한 뒤(Do), 돌아보기(See)</p>
 
-    <!-- 계획 등록 카드 -->
+    <!-- 새 계획 / 수정 카드 -->
     <div class="card">
-        <h2>새 계획 만들기</h2>
-        <input type="text" id="planText" placeholder="핵심 계획 제목 입력">
-        <input type="date" id="planDate" value="2026-09-01">
-        <select id="planCategory">
-            <option value="공부">카테고리: 공부</option>
-            <option value="업무" selected>카테고리: 업무</option>
-            <option value="운동">카테고리: 운동</option>
+        <h2 id="formTitle">새 계획 만들기</h2>
+        <input type="hidden" id="editIndex" value="">
+        <input type="text" id="planText" placeholder="하고 싶은 계획을 입력하세요">
+        <div class="row-group">
+            <input type="date" id="planDate">
+            <select id="planCategory">
+                <option value="공부">카테고리: 공부</option>
+                <option value="업무" selected>카테고리: 업무</option>
+                <option value="운동">카테고리: 운동</option>
+                <option value="생활">카테고리: 생활</option>
+                <option value="기타">카테고리: 기타</option>
+            </select>
+        </div>
+        <select id="planPriority">
+            <option value="상">중요도: 상</option>
+            <option value="중" selected>중요도: 중</option>
+            <option value="하">중요도: 하</option>
         </select>
-        <button onclick="savePlan()">계획 등록하기</button>
+        <button id="submitBtn" onclick="savePlan()">계획 추가하기</button>
+        <button id="cancelBtn" onclick="resetForm()" style="background-color: #b5aca6; display: none; margin-top: 8px;">수정 취소</button>
     </div>
 
-    <!-- 집계 분석 대시보드 (T06-C81) -->
+    <!-- 내 계획 목록 -->
     <div class="card">
-        <h2>📊 기간별 계획 및 실행 집계 분석</h2>
-        <table class="analytics-table">
-            <thead>
-                <tr>
-                    <th>계획명</th>
-                    <th>계획수</th>
-                    <th>완료수</th>
-                    <th>지연수</th>
-                    <th>막힘수</th>
-                    <th>예상시간</th>
-                    <th>실제시간</th>
-                    <th>시간차이</th>
-                </tr>
-            </thead>
-            <tbody id="analyticsTableBody"></tbody>
-        </table>
+        <h2>
+            내 계획 목록
+            <div class="filter-container">
+                <input type="text" id="keywordSearch" placeholder="계획 검색..." oninput="renderPlans()" style="padding: 5px 10px; font-size: 0.9em; margin: 0; width: 130px;">
+                <select id="categoryFilter" onchange="renderPlans()" style="padding: 5px; font-size: 0.9em; margin: 0; width: auto;">
+                    <option value="전체">모든 카테고리</option>
+                    <option value="공부">공부</option>
+                    <option value="업무">업무</option>
+                    <option value="운동">운동</option>
+                    <option value="생활">생활</option>
+                    <option value="기타">기타</option>
+                </select>
+                <label><input type="checkbox" id="hideCompleted" onchange="renderPlans()"> 완료 숨기기</label>
+            </div>
+        </h2>
+        <ul id="planList"></ul>
     </div>
 
-    <!-- 내 계획 및 할 일 목록 -->
+    <!-- 하루 돌아보기 작성 -->
     <div class="card">
-        <h2>내 계획 및 세부 할 일 (Todo) 목록</h2>
-        <div id="planListContainer"></div>
-    </div>
-
-    <!-- 하루 돌아보기 -->
-    <div class="card">
-        <h2>하루 돌아보기 작성 및 확인</h2>
-        <input type="date" id="reviewDate" value="2026-09-01">
-        <textarea id="dailyReviewText" rows="3" placeholder="오늘 하루를 돌아보며 적어보세요"></textarea>
-        <input type="text" id="nextPlanPoint" placeholder="다음 계획으로 넘길 고칠 점 한 줄 입력">
+        <h2>하루 돌아보기 작성</h2>
+        <input type="date" id="reviewDate">
+        <textarea id="dailyReviewText" rows="4" placeholder="오늘 하루를 돌아보며 적어보세요"></textarea>
         <button onclick="saveReview()">돌아보기 저장하기</button>
-        <div id="reviewResult" class="review-result-box" style="margin-top: 15px;"></div>
     </div>
 
-    <!-- 데이터 관리 -->
+    <!-- 날짜별 돌아보기 조회 -->
     <div class="card">
-        <h2>데이터 관리 (내보내기 / 복원 / DB연결 점검)</h2>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button onclick="exportData()" style="background-color: var(--sub-text);">데이터 전체 내보내기 (.json)</button>
-            <button onclick="document.getElementById('importFile').click()">데이터 복원</button>
-            <button onclick="checkDatabaseStatus()" style="background-color: var(--btn-hover);">DB 연결 상태 확인</button>
+        <h2>날짜별 돌아보기 보기</h2>
+        <div class="search-box">
+            <input type="date" id="searchDate" onchange="searchReview()">
+            <button onclick="clearSearch()">오늘 보기</button>
+        </div>
+        <div id="reviewResult" class="review-result-box">
+            <div class="review-content-text">날짜를 선택하면 해당 기록이 여기에 표시됩니다.</div>
+        </div>
+    </div>
+
+    <!-- 전체 계획 집계 및 백업 -->
+    <div class="card">
+        <h2>전체 계획 집계 및 데이터 관리</h2>
+        <div class="stats" style="margin-bottom: 20px;">
+            <div>
+                <div>등록된 전체</div>
+                <div id="totalCount">0개</div>
+            </div>
+            <div>
+                <div>완료한 계획</div>
+                <div id="completedCount">0개</div>
+            </div>
+            <div>
+                <div>못 한 계획</div>
+                <div id="pendingCount">0개</div>
+            </div>
+        </div>
+        <div class="backup-group">
+            <button onclick="exportData()">데이터 백업 (다운로드)</button>
+            <button onclick="document.getElementById('importFile').click()">데이터 복원 (불러오기)</button>
             <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
         </div>
     </div>
 
     <script>
-        // 데이터베이스(Repository) 계층 모듈화 및 초기 시드 데이터 적재
-        const PlanDoSeeDB = {
-            storageKey: 'plandouce_db_v2',
-            getInitialData() {
-                return {
-                    plans: [
-                        {
-                            id: 1725148800000,
-                            text: "웹 서비스 프론트엔드 고도화 및 품질 검증 프로젝트",
-                            date: "2026-09-01",
-                            category: "업무",
-                            priority: "상",
-                            completed: false,
-                            todos: [
-                                { id: 1, text: "&lt;script&gt;alert('XSS Test')&lt;/script&gt; 스크립트 문자열 안전성 검토", date: "2026-08-25", priority: "상", tag: "보안", estimatedHours: 2.0, completed: true, executionLogs: [{ id: 101, startTime: "09:00", endTime: "11:00", actualHours: 2.0, blockReason: "" }] },
-                                { id: 2, text: "UI 컴포넌트 반응형 레이아웃 그리드 점검", date: "2026-08-26", priority: "중", tag: "디자인", estimatedHours: 1.5, completed: true, executionLogs: [{ id: 102, startTime: "13:00", endTime: "15:00", actualHours: 2.0, blockReason: "CSS 호환성 충돌" }] },
-                                { id: 3, text: "데이터베이스 스키마 v2 계약서 연동 확인", date: "2026-08-27", priority: "상", tag: "기획", estimatedHours: 3.0, completed: false, executionLogs: [{ id: 103, startTime: "10:00", endTime: "13:30", actualHours: 3.5, blockReason: "API 규격 불일치" }] },
-                                { id: 4, text: "로컬 스토리지 백업 및 복원 기능 유닛 테스트", date: "2026-08-28", priority: "중", tag: "개발", estimatedHours: 1.0, completed: false, executionLogs: [] },
-                                { id: 5, text: "최종 제출문 작성 및 최종 검수 진행", date: "2026-08-29", priority: "상", tag: "문서", estimatedHours: 2.0, completed: false, executionLogs: [] }
-                            ]
-                        }
-                    ],
-                    reviews: {
-                        "2026-09-01": {
-                            text: "계획했던 프론트엔드 고도화와 XSS 방어 문자열 검증을 완료함.",
-                            nextPoint: "다음부터는 API 규격 문서를 사전에 더 철저히 검토할 것."
-                        }
-                    }
-                };
-            },
-            load() {
-                const data = localStorage.getItem(this.storageKey);
-                if (!data) {
-                    const initial = this.getInitialData();
-                    this.save(initial);
-                    return initial;
-                }
-                try {
-                    return JSON.parse(data);
-                } catch (e) {
-                    return this.getInitialData();
-                }
-            },
-            save(data) {
-                localStorage.setItem(this.storageKey, JSON.stringify(data));
-            }
-        };
+        let plans = JSON.parse(localStorage.getItem('plans')) || [];
+        let reviews = JSON.parse(localStorage.getItem('reviews')) || {};
+        let currentTheme = localStorage.getItem('theme') || 'light';
 
-        let dbData = PlanDoSeeDB.load();
-        let plans = dbData.plans;
-        let reviews = dbData.reviews;
+        // 테마 초기 설정
+        document.body.setAttribute('data-theme', currentTheme);
+        document.querySelector('.theme-toggle-btn').innerText = currentTheme === 'dark' ? '☀️' : '🌙';
 
-        function saveAndRender() {
-            PlanDoSeeDB.save({ plans, reviews });
-            renderPlans();
-            renderAnalytics();
-            renderReview();
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', currentTheme);
+            document.querySelector('.theme-toggle-btn').innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', currentTheme);
         }
 
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('planDate').value = todayStr;
+        document.getElementById('reviewDate').value = todayStr;
+        document.getElementById('searchDate').value = todayStr;
+
+        // --- 계획 관련 함수 ---
+        function saveAndRenderPlans() {
+            localStorage.setItem('plans', JSON.stringify(plans));
+            renderPlans();
         }
 
         function savePlan() {
+            const editIndex = document.getElementById('editIndex').value;
             const textInput = document.getElementById('planText');
-            const text = textInput.value.trim();
-            if (!text) return alert('계획 제목을 입력해주세요.');
-            plans.push({
-                id: Date.now(),
-                text: escapeHtml(text),
-                date: document.getElementById('planDate').value,
-                category: document.getElementById('planCategory').value,
-                priority: '상',
-                completed: false,
-                todos: []
-            });
+            const dateInput = document.getElementById('planDate');
+            const categoryInput = document.getElementById('planCategory');
+            const priorityInput = document.getElementById('planPriority');
+
+            if (!textInput.value.trim()) {
+                alert('계획 내용을 입력해주세요.');
+                return;
+            }
+
+            if (editIndex === "") {
+                const newPlan = {
+                    id: Date.now(),
+                    text: textInput.value,
+                    date: dateInput.value || '날짜 미지정',
+                    category: categoryInput.value,
+                    priority: priorityInput.value,
+                    completed: false
+                };
+                plans.push(newPlan);
+            } else {
+                const index = parseInt(editIndex);
+                plans[index].text = textInput.value;
+                plans[index].date = dateInput.value || '날짜 미지정';
+                plans[index].category = categoryInput.value;
+                plans[index].priority = priorityInput.value;
+                resetForm();
+            }
+
             textInput.value = '';
-            saveAndRender();
+            saveAndRenderPlans();
         }
 
-        function renderAnalytics() {
-            const tbody = document.getElementById('analyticsTableBody');
-            tbody.innerHTML = '';
-            plans.forEach(p => {
-                const todos = p.todos || [];
-                const planCount = todos.length;
-                const completedCount = todos.filter(t => t.completed).length;
-                const delayedCount = todos.filter(t => !t.completed && t.date < "2026-09-01").length;
-                const blockedCount = todos.filter(t => t.executionLogs && t.executionLogs.some(l => l.blockReason)).length;
-                const totalEstimated = todos.reduce((s, t) => s + (t.estimatedHours || 0), 0);
-                const totalActual = todos.reduce((s, t) => s + (t.executionLogs || []).reduce((acc, l) => acc + (l.actualHours || 0), 0), 0);
-                const timeDiff = totalActual - totalEstimated;
+        function editPlan(id) {
+            const plan = plans.find(p => p.id === id);
+            const index = plans.findIndex(p => p.id === id);
+            if (!plan) return;
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="font-weight:bold;">${p.text}</td>
-                        <td>${planCount}개</td>
-                        <td>${completedCount}개</td>
-                        <td>${delayedCount}개</td>
-                        <td>${blockedCount}개</td>
-                        <td>${totalEstimated}시간</td>
-                        <td>${totalActual}시간</td>
-                        <td>${timeDiff > 0 ? '+' : ''}${timeDiff}시간</td>
-                    </tr>
-                `;
-            });
+            document.getElementById('planText').value = plan.text;
+            document.getElementById('planDate').value = plan.date !== '날짜 미지정' ? plan.date : '';
+            document.getElementById('planCategory').value = plan.category || '업무';
+            document.getElementById('planPriority').value = plan.priority;
+            document.getElementById('editIndex').value = index;
+
+            document.getElementById('formTitle').innerText = '계획 수정하기';
+            document.getElementById('submitBtn').innerText = '수정 완료';
+            document.getElementById('cancelBtn').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('editIndex').value = '';
+            document.getElementById('planText').value = '';
+            document.getElementById('planDate').value = todayStr;
+            document.getElementById('formTitle').innerText = '새 계획 만들기';
+            document.getElementById('submitBtn').innerText = '계획 추가하기';
+            document.getElementById('cancelBtn').style.display = 'none';
+        }
+
+        function togglePlan(id) {
+            plans = plans.map(p => p.id === id ? { ...p, completed: !p.completed } : p);
+            saveAndRenderPlans();
+        }
+
+        function deletePlan(id) {
+            plans = plans.filter(p => p.id !== id);
+            saveAndRenderPlans();
         }
 
         function renderPlans() {
-            const container = document.getElementById('planListContainer');
-            container.innerHTML = '';
+            const listEl = document.getElementById('planList');
+            listEl.innerHTML = '';
+
+            const hideCompleted = document.getElementById('hideCompleted').checked;
+            const selectedCategory = document.getElementById('categoryFilter').value;
+            const keyword = document.getElementById('keywordSearch').value.trim().toLowerCase();
+            let completedCount = 0;
+
             plans.forEach(p => {
-                container.innerHTML += `
-                    <div class="card" style="background:var(--li-bg); margin-bottom:10px;">
-                        <div style="font-weight:bold; font-size:1.05em; margin-bottom:8px;">📌 ${p.text}</div>
-                        <ul>
-                            ${(p.todos || []).map(t => `
-                                <li style="margin-bottom:6px;">
-                                    <div class="li-main">
-                                        <span><span class="tag-badge">#${t.tag}</span> <b>${t.text}</b> (예상: ${t.estimatedHours}h / 마감: ${t.date})</span>
-                                        <span>완료: ${t.completed ? 'O' : 'X'} | 로그: ${(t.executionLogs || []).length}건</span>
-                                    </div>
-                                </li>
-                            `).join('')}
-                        </ul>
+                if (p.completed) completedCount++;
+
+                if (hideCompleted && p.completed) return;
+                if (selectedCategory !== '전체' && p.category !== selectedCategory) return;
+                if (keyword && !p.text.toLowerCase().includes(keyword)) return;
+
+                const li = document.createElement('li');
+                if (p.completed) li.classList.add('completed');
+
+                li.innerHTML = `
+                    <div class="li-left">
+                        <input type="checkbox" ${p.completed ? 'checked' : ''} onclick="togglePlan(${p.id})">
+                        <span class="tag-badge">${p.category || '기타'}</span>
+                        <span class="text"><b>[${p.priority}]</b> ${p.text} <small style="opacity: 0.8;">(${p.date})</small></span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn" onclick="editPlan(${p.id})">수정</button>
+                        <button class="delete-btn" onclick="deletePlan(${p.id})">삭제</button>
                     </div>
                 `;
+                listEl.appendChild(li);
             });
+
+            document.getElementById('totalCount').innerText = plans.length + '개';
+            document.getElementById('completedCount').innerText = completedCount + '개';
+            document.getElementById('pendingCount').innerText = (plans.length - completedCount) + '개';
         }
 
+        // --- 하루 돌아보기 관련 함수 ---
         function saveReview() {
-            const date = document.getElementById('reviewDate').value;
-            const text = document.getElementById('dailyReviewText').value.trim();
-            const nextPoint = document.getElementById('nextPlanPoint').value.trim();
-            if (!text) return alert('내용을 입력하세요.');
-            reviews[date] = { text: escapeHtml(text), nextPoint: escapeHtml(nextPoint) };
-            saveAndRender();
-            alert('돌아보기 저장 완료');
+            const dateInput = document.getElementById('reviewDate').value;
+            const textInput = document.getElementById('dailyReviewText').value;
+
+            if (!dateInput) {
+                alert('날짜를 선택해주세요.');
+                return;
+            }
+            if (!textInput.trim()) {
+                alert('돌아보기 내용을 입력해주세요.');
+                return;
+            }
+
+            reviews[dateInput] = textInput;
+            localStorage.setItem('reviews', JSON.stringify(reviews));
+            
+            document.getElementById('searchDate').value = dateInput;
+            searchReview();
+            alert('돌아보기 기록이 저장되었습니다.');
         }
 
-        function renderReview() {
-            const date = document.getElementById('reviewDate').value;
-            const rev = reviews[date];
-            const box = document.getElementById('reviewResult');
-            if (rev) {
-                document.getElementById('dailyReviewText').value = rev.text;
-                document.getElementById('nextPlanPoint').value = rev.nextPoint || '';
-                box.innerHTML = `<b>[${date} 돌아보기]</b><br>${rev.text}<br><br>📌 다음 계획으로 넘긴 고칠 점: <b>${rev.nextPoint || '없음'}</b>`;
+        function searchReview() {
+            const searchDate = document.getElementById('searchDate').value;
+            const resultBox = document.getElementById('reviewResult');
+
+            if (!searchDate) {
+                resultBox.innerHTML = '<div class="review-content-text">날짜를 선택해주세요.</div>';
+                return;
+            }
+
+            if (reviews[searchDate]) {
+                resultBox.innerHTML = `
+                    <div class="review-content-text">${reviews[searchDate]}</div>
+                    <div class="review-actions">
+                        <button class="action-btn" onclick="editReview('${searchDate}')">수정</button>
+                        <button class="delete-btn" onclick="deleteReview('${searchDate}')">삭제</button>
+                    </div>
+                `;
             } else {
-                box.innerHTML = '해당 날짜의 돌아보기 기록이 없습니다.';
+                resultBox.innerHTML = '<div class="review-content-text">해당 날짜에 작성된 돌아보기 기록이 없습니다.</div>';
             }
         }
 
+        function editReview(dateStr) {
+            document.getElementById('reviewDate').value = dateStr;
+            document.getElementById('dailyReviewText').value = reviews[dateStr];
+            window.scrollTo({ top: document.getElementById('dailyReviewText').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function deleteReview(dateStr) {
+            if (confirm(`${dateStr} 돌아보기 기록을 삭제하시겠습니까?`)) {
+                delete reviews[dateStr];
+                localStorage.setItem('reviews', JSON.stringify(reviews));
+                searchReview();
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchDate').value = todayStr;
+            searchReview();
+        }
+
+        // --- 데이터 백업 및 복원 함수 ---
         function exportData() {
             const data = { plans, reviews };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'plandouce_backup.json';
+            a.download = `plandouce_backup_${todayStr}.json`;
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -337,31 +462,33 @@
         function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
+
             const reader = new FileReader();
-            reader.onload = e => {
+            reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
                     if (parsed.plans && parsed.reviews) {
                         plans = parsed.plans;
                         reviews = parsed.reviews;
-                        saveAndRender();
-                        alert('데이터 복원 완료');
+                        localStorage.setItem('plans', JSON.stringify(plans));
+                        localStorage.setItem('reviews', JSON.stringify(reviews));
+                        renderPlans();
+                        searchReview();
+                        alert('데이터가 성공적으로 복원되었습니다.');
                     } else {
-                        alert('올바르지 않은 백업 파일 형식입니다.');
+                        alert('올바른 백업 파일 형식이 아닙니다.');
                     }
                 } catch (err) {
                     alert('파일을 읽는 중 오류가 발생했습니다.');
                 }
             };
             reader.readAsText(file);
+            event.target.value = '';
         }
 
-        function checkDatabaseStatus() {
-            const status = localStorage.getItem(PlanDoSeeDB.storageKey) ? '연결 및 정상 작동 중 (Persistence Active)' : '연결 필요';
-            alert(`[데이터베이스 상태 점검]\n- 저장소 유형: 브라우저 영구 저장소 (LocalStorage Repository)\n- 상태: ${status}\n- 스키마 버전: v2 호환`);
-        }
-
-        saveAndRender();
+        // 초기 실행
+        renderPlans();
+        searchReview();
     </script>
 </body>
 </html>
