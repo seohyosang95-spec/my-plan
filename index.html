@@ -24,7 +24,7 @@
             margin-bottom: 25px; 
             border: 1px solid #eee4d5;
         }
-        h2 { color: #6b4f3b; font-size: 1.3em; margin-top: 0; border-bottom: 2px solid #f4eee1; padding-bottom: 10px; }
+        h2 { color: #6b4f3b; font-size: 1.3em; margin-top: 0; border-bottom: 2px solid #f4eee1; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         input, select, textarea { 
             padding: 12px; 
             margin: 8px 0; 
@@ -41,6 +41,9 @@
             border-color: #a48566;
             background-color: #fff;
         }
+        .row-group { display: flex; gap: 10px; }
+        .row-group select, .row-group input { width: 50%; }
+        
         button { 
             background-color: #bfa181; 
             color: white; 
@@ -55,6 +58,7 @@
             margin-top: 5px;
         }
         button:hover { background-color: #a48566; }
+        
         ul { list-style: none; padding: 0; }
         li { 
             display: flex; 
@@ -67,38 +71,33 @@
             border: 1px solid #f0e6da;
         }
         li.completed span.text { text-decoration: line-through; color: #b5aca6; }
-        .li-left { display: flex; align-items: center; gap: 12px; flex-grow: 1; }
-        input[type="checkbox"] { width: 20px; height: 20px; accent-color: #bfa181; cursor: pointer; margin: 0; }
+        .li-left { display: flex; align-items: center; gap: 10px; flex-grow: 1; overflow: hidden; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: #bfa181; cursor: pointer; margin: 0; flex-shrink: 0; }
         
-        .delete-btn { background-color: #d99b9b; width: auto; padding: 6px 12px; font-size: 0.9em; border-radius: 6px; }
+        .tag-badge {
+            background-color: #e6dfd5;
+            color: #6b4f3b;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .btn-group { display: flex; gap: 5px; flex-shrink: 0; }
+        .action-btn { background-color: #a48566; width: auto; padding: 6px 10px; font-size: 0.85em; border-radius: 6px; margin: 0; }
+        .action-btn:hover { background-color: #8c7355; }
+        .delete-btn { background-color: #d99b9b; width: auto; padding: 6px 10px; font-size: 0.85em; border-radius: 6px; margin: 0; }
         .delete-btn:hover { background-color: #c48282; }
 
+        .filter-container { font-size: 0.85em; color: #8c7355; font-weight: normal; display: flex; align-items: center; gap: 5px; }
+        .filter-container input { width: auto; margin: 0; height: 16px; width: 16px; }
+
         /* 돌아보기 조회 영역 스타일 */
-        .search-box {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .search-box input {
-            margin: 0;
-            flex-grow: 1;
-        }
-        .search-box button {
-            width: auto;
-            margin: 0;
-            padding: 12px 20px;
-            white-space: nowrap;
-        }
-        .review-result-box {
-            background: #faf6f0;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #f0e6da;
-            min-height: 80px;
-            white-space: pre-wrap;
-            color: #4a403a;
-        }
+        .search-box { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
+        .search-box input { margin: 0; flex-grow: 1; }
+        .search-box button { width: auto; margin: 0; padding: 12px 20px; white-space: nowrap; background-color: #bfa181; }
+        .review-result-box { background: #faf6f0; padding: 15px; border-radius: 10px; border: 1px solid #f0e6da; min-height: 80px; white-space: pre-wrap; color: #4a403a; }
 
         .stats { display: flex; justify-content: space-around; text-align: center; }
         .stats div div:last-child { font-size: 1.8em; font-weight: bold; color: #6b4f3b; margin-top: 8px; }
@@ -109,22 +108,38 @@
     <h1>플랜두씨 다이어리</h1>
     <p class="subtitle">계획하고(Plan), 실행한 뒤(Do), 돌아보기(See)</p>
 
-    <!-- 새 계획 만들기 -->
+    <!-- 새 계획 만들기 / 수정하기 카드 -->
     <div class="card">
-        <h2>새 계획 만들기</h2>
+        <h2 id="formTitle">새 계획 만들기</h2>
+        <input type="hidden" id="editIndex" value="">
         <input type="text" id="planText" placeholder="하고 싶은 계획을 입력하세요">
-        <input type="date" id="planDate">
+        <div class="row-group">
+            <input type="date" id="planDate">
+            <select id="planCategory">
+                <option value="공부">카테고리: 공부</option>
+                <option value="업무" selected>카테고리: 업무</option>
+                <option value="운동">카테고리: 운동</option>
+                <option value="생활">카테고리: 생활</option>
+                <option value="기타">카테고리: 기타</option>
+            </select>
+        </div>
         <select id="planPriority">
             <option value="상">중요도: 상</option>
             <option value="중" selected>중요도: 중</option>
             <option value="하">중요도: 하</option>
         </select>
-        <button onclick="addPlan()">계획 추가하기</button>
+        <button id="submitBtn" onclick="savePlan()">계획 추가하기</button>
+        <button id="cancelBtn" onclick="resetForm()" style="background-color: #b5aca6; display: none; margin-top: 8px;">수정 취소</button>
     </div>
 
     <!-- 내 계획 목록 -->
     <div class="card">
-        <h2>내 계획 목록</h2>
+        <h2>
+            내 계획 목록
+            <label class="filter-container">
+                <input type="checkbox" id="hideCompleted" onchange="renderPlans()"> 완료된 항목 숨기기
+            </label>
+        </h2>
         <ul id="planList"></ul>
     </div>
 
@@ -141,7 +156,7 @@
         <h2>날짜별 돌아보기 보기</h2>
         <div class="search-box">
             <input type="date" id="searchDate" onchange="searchReview()">
-            <button class="delete-btn" style="background-color: #bfa181;" onclick="clearSearch()">전체보기</button>
+            <button onclick="clearSearch()">오늘 보기</button>
         </div>
         <div id="reviewResult" class="review-result-box">날짜를 선택하면 해당 기록이 여기에 표시됩니다.</div>
     </div>
@@ -167,7 +182,7 @@
 
     <script>
         let plans = JSON.parse(localStorage.getItem('plans')) || [];
-        let reviews = JSON.parse(localStorage.getItem('reviews')) || {}; // 객체 형태로 관리
+        let reviews = JSON.parse(localStorage.getItem('reviews')) || {};
 
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('planDate').value = todayStr;
@@ -180,9 +195,11 @@
             renderPlans();
         }
 
-        function addPlan() {
+        function savePlan() {
+            const editIndex = document.getElementById('editIndex').value;
             const textInput = document.getElementById('planText');
             const dateInput = document.getElementById('planDate');
+            const categoryInput = document.getElementById('planCategory');
             const priorityInput = document.getElementById('planPriority');
 
             if (!textInput.value.trim()) {
@@ -190,17 +207,55 @@
                 return;
             }
 
-            const newPlan = {
-                id: Date.now(),
-                text: textInput.value,
-                date: dateInput.value || '날짜 미지정',
-                priority: priorityInput.value,
-                completed: false
-            };
+            if (editIndex === "") {
+                // 새 계획 추가
+                const newPlan = {
+                    id: Date.now(),
+                    text: textInput.value,
+                    date: dateInput.value || '날짜 미지정',
+                    category: categoryInput.value,
+                    priority: priorityInput.value,
+                    completed: false
+                };
+                plans.push(newPlan);
+            } else {
+                // 기존 계획 수정
+                const index = parseInt(editIndex);
+                plans[index].text = textInput.value;
+                plans[index].date = dateInput.value || '날짜 미지정';
+                plans[index].category = categoryInput.value;
+                plans[index].priority = priorityInput.value;
+                resetForm();
+            }
 
-            plans.push(newPlan);
             textInput.value = '';
             saveAndRenderPlans();
+        }
+
+        function editPlan(id) {
+            const plan = plans.find(p => p.id === id);
+            const index = plans.findIndex(p => p.id === id);
+            if (!plan) return;
+
+            document.getElementById('planText').value = plan.text;
+            document.getElementById('planDate').value = plan.date !== '날짜 미지정' ? plan.date : '';
+            document.getElementById('planCategory').value = plan.category || '업무';
+            document.getElementById('planPriority').value = plan.priority;
+            document.getElementById('editIndex').value = index;
+
+            document.getElementById('formTitle').innerText = '계획 수정하기';
+            document.getElementById('submitBtn').innerText = '수정 완료';
+            document.getElementById('cancelBtn').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('editIndex').value = '';
+            document.getElementById('planText').value = '';
+            document.getElementById('planDate').value = todayStr;
+            document.getElementById('formTitle').innerText = '새 계획 만들기';
+            document.getElementById('submitBtn').innerText = '계획 추가하기';
+            document.getElementById('cancelBtn').style.display = 'none';
         }
 
         function togglePlan(id) {
@@ -217,10 +272,13 @@
             const listEl = document.getElementById('planList');
             listEl.innerHTML = '';
 
-            let completed = 0;
+            const hideCompleted = document.getElementById('hideCompleted').checked;
+            let completedCount = 0;
 
             plans.forEach(p => {
-                if (p.completed) completed++;
+                if (p.completed) completedCount++;
+
+                if (hideCompleted && p.completed) return; // 숨기기 체크 시 완료 항목 제외
 
                 const li = document.createElement('li');
                 if (p.completed) li.classList.add('completed');
@@ -228,16 +286,20 @@
                 li.innerHTML = `
                     <div class="li-left">
                         <input type="checkbox" ${p.completed ? 'checked' : ''} onclick="togglePlan(${p.id})">
+                        <span class="tag-badge">${p.category || '기타'}</span>
                         <span class="text"><b>[${p.priority}]</b> ${p.text} <small style="color:#8c7355;">(${p.date})</small></span>
                     </div>
-                    <button class="delete-btn" onclick="deletePlan(${p.id})">삭제</button>
+                    <div class="btn-group">
+                        <button class="action-btn" onclick="editPlan(${p.id})">수정</button>
+                        <button class="delete-btn" onclick="deletePlan(${p.id})">삭제</button>
+                    </div>
                 `;
                 listEl.appendChild(li);
             });
 
             document.getElementById('totalCount').innerText = plans.length + '개';
-            document.getElementById('completedCount').innerText = completed + '개';
-            document.getElementById('pendingCount').innerText = (plans.length - completed) + '개';
+            document.getElementById('completedCount').innerText = completedCount + '개';
+            document.getElementById('pendingCount').innerText = (plans.length - completedCount) + '개';
         }
 
         // --- 하루 돌아보기 관련 함수 ---
@@ -283,7 +345,7 @@
             searchReview();
         }
 
-        // 초기 실행 시 오늘 날짜 기록 불러오기
+        // 초기 실행
         renderPlans();
         searchReview();
     </script>
