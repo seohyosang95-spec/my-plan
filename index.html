@@ -5,21 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>플랜두씨 다이어리</title>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; color: #333; }
-        h1 { text-align: center; color: #2c3e50; }
-        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
-        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, textarea { padding: 8px; margin: 5px 0; width: calc(100% - 18px); box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-        button { background-color: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
-        button:hover { background-color: #2980b9; }
+        body { 
+            font-family: 'Malgun Gothic', sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 30px 20px; 
+            background: linear-gradient(135deg, #fdfbf7 0%, #f4eee1 100%); 
+            color: #4a403a; 
+            min-height: 100vh;
+        }
+        h1 { text-align: center; color: #5c4033; font-size: 2.2em; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #8c7355; margin-bottom: 35px; font-size: 1.1em; }
+        .card { 
+            background: #ffffff; 
+            padding: 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 15px rgba(92, 64, 51, 0.06); 
+            margin-bottom: 25px; 
+            border: 1px solid #eee4d5;
+        }
+        h2 { color: #6b4f3b; font-size: 1.3em; margin-top: 0; border-bottom: 2px solid #f4eee1; padding-bottom: 10px; }
+        input, select, textarea { 
+            padding: 12px; 
+            margin: 8px 0; 
+            width: calc(100% - 24px); 
+            box-sizing: border-box; 
+            border: 1px solid #dcd3c1; 
+            border-radius: 8px; 
+            background-color: #faf8f5;
+            color: #4a403a;
+            font-size: 1em;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #a48566;
+            background-color: #fff;
+        }
+        button { 
+            background-color: #bfa181; 
+            color: white; 
+            border: none; 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            width: 100%; 
+            font-weight: bold; 
+            font-size: 1.05em;
+            transition: background 0.2s;
+            margin-top: 5px;
+        }
+        button:hover { background-color: #a48566; }
         ul { list-style: none; padding: 0; }
-        li { display: flex; align-items: center; justify-content: space-between; background: #ecf0f1; padding: 10px; margin-top: 8px; border-radius: 4px; }
-        li.completed span.text { text-decoration: line-through; color: #95a5a6; }
-        .li-left { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
-        .delete-btn { background-color: #e74c3c; width: auto; padding: 5px 10px; font-size: 12px; }
-        .delete-btn:hover { background-color: #c0392b; }
+        li { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            background: #faf6f0; 
+            padding: 12px 15px; 
+            margin-top: 10px; 
+            border-radius: 10px; 
+            border: 1px solid #f0e6da;
+        }
+        li.completed span.text { text-decoration: line-through; color: #b5aca6; }
+        .li-left { display: flex; align-items: center; gap: 12px; flex-grow: 1; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: #bfa181; cursor: pointer; margin: 0; }
+        .delete-btn { background-color: #d99b9b; width: auto; padding: 6px 12px; font-size: 0.9em; border-radius: 6px; }
+        .delete-btn:hover { background-color: #c48282; }
         .stats { display: flex; justify-content: space-around; text-align: center; }
-        .stats div div:last-child { font-size: 24px; font-weight: bold; color: #2c3e50; margin-top: 5px; }
+        .stats div div:last-child { font-size: 1.8em; font-weight: bold; color: #6b4f3b; margin-top: 8px; }
+        .review-hint { font-size: 0.85em; color: #a39587; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -50,7 +104,7 @@
     <div class="card">
         <h2>하루 돌아보기</h2>
         <textarea id="dailyReview" rows="4" placeholder="오늘 하루를 돌아보며 적어보세요 (자동 저장됩니다)"></textarea>
-        <p style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">글을 쓰면 자동으로 저장됩니다.</p>
+        <div class="review-hint">글을 쓰면 자동으로 저장됩니다.</div>
     </div>
 
     <!-- 전체 계획 집계 -->
@@ -73,13 +127,11 @@
     </div>
 
     <script>
-        // 데이터 불러오기
         let plans = JSON.parse(localStorage.getItem('plans')) || [];
         let review = localStorage.getItem('review') || '';
 
         document.getElementById('dailyReview').value = review;
 
-        // 자동 저장 (돌아보기)
         document.getElementById('dailyReview').addEventListener('input', (e) => {
             localStorage.setItem('review', e.target.value);
         });
@@ -138,20 +190,18 @@
                 li.innerHTML = `
                     <div class="li-left">
                         <input type="checkbox" ${p.completed ? 'checked' : ''} onclick="togglePlan(${p.id})">
-                        <span class="text"><b>[${p.priority}]</b> ${p.text} <small>(${p.date})</small></span>
+                        <span class="text"><b>[${p.priority}]</b> ${p.text} <small style="color:#8c7355;">(${p.date})</small></span>
                     </div>
                     <button class="delete-btn" onclick="deletePlan(${p.id})">삭제</button>
                 `;
                 listEl.appendChild(li);
             });
 
-            // 집계 업데이트
             document.getElementById('totalCount').innerText = plans.length + '개';
             document.getElementById('completedCount').innerText = completed + '개';
             document.getElementById('pendingCount').innerText = (plans.length - completed) + '개';
         }
 
-        // 초기 렌더링 실행
         renderPlans();
     </script>
 </body>
