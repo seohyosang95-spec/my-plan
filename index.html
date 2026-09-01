@@ -5,47 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>플랜두씨 다이어리</title>
     <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #fdfbf7 0%, #f4eee1 100%);
+            --text-color: #4a403a;
+            --title-color: #5c4033;
+            --subtitle-color: #8c7355;
+            --card-bg: #ffffff;
+            --card-border: #eee4d5;
+            --input-bg: #faf8f5;
+            --input-border: #dcd3c1;
+            --input-text: #4a403a;
+            --btn-bg: #bfa181;
+            --btn-hover: #a48566;
+            --li-bg: #faf6f0;
+            --li-border: #f0e6da;
+            --tag-bg: #e6dfd5;
+            --tag-text: #6b4f3b;
+            --sub-text: #a39587;
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #1f1b18 0%, #2c2621 100%);
+            --text-color: #e6dfd5;
+            --title-color: #f4eee1;
+            --subtitle-color: #c2b29f;
+            --card-bg: #28221e;
+            --card-border: #3d342d;
+            --input-bg: #322b25;
+            --input-border: #4d4239;
+            --input-text: #e6dfd5;
+            --btn-bg: #9c8b7c;
+            --btn-hover: #bfa181;
+            --li-bg: #322b25;
+            --li-border: #3d342d;
+            --tag-bg: #41372f;
+            --tag-text: #e6dfd5;
+            --sub-text: #8c7355;
+        }
+
         body { 
             font-family: 'Malgun Gothic', sans-serif; 
             max-width: 800px; 
             margin: 0 auto; 
             padding: 30px 20px; 
-            background: linear-gradient(135deg, #fdfbf7 0%, #f4eee1 100%); 
-            color: #4a403a; 
+            background: var(--bg-gradient); 
+            color: var(--text-color); 
             min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
         }
-        h1 { text-align: center; color: #5c4033; font-size: 2.2em; margin-bottom: 5px; }
-        .subtitle { text-align: center; color: #8c7355; margin-bottom: 35px; font-size: 1.1em; }
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        h1 { text-align: center; color: var(--title-color); font-size: 2.2em; margin: 0; flex-grow: 1; }
+        .theme-toggle-btn { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 5px; width: auto; }
+        .subtitle { text-align: center; color: var(--subtitle-color); margin-bottom: 35px; font-size: 1.1em; }
         .card { 
-            background: #ffffff; 
+            background: var(--card-bg); 
             padding: 25px; 
             border-radius: 16px; 
-            box-shadow: 0 4px 15px rgba(92, 64, 51, 0.06); 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); 
             margin-bottom: 25px; 
-            border: 1px solid #eee4d5;
+            border: 1px solid var(--card-border);
+            transition: background 0.3s, border 0.3s;
         }
-        h2 { color: #6b4f3b; font-size: 1.3em; margin-top: 0; border-bottom: 2px solid #f4eee1; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        h2 { color: var(--title-color); font-size: 1.3em; margin-top: 0; border-bottom: 2px solid var(--card-border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         input, select, textarea { 
             padding: 12px; 
             margin: 8px 0; 
             width: calc(100% - 24px); 
             box-sizing: border-box; 
-            border: 1px solid #dcd3c1; 
+            border: 1px solid var(--input-border); 
             border-radius: 8px; 
-            background-color: #faf8f5;
-            color: #4a403a;
+            background-color: var(--input-bg);
+            color: var(--input-text);
             font-size: 1em;
+            transition: background 0.3s, border 0.3s, color 0.3s;
         }
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: #a48566;
-            background-color: #fff;
+            border-color: var(--btn-hover);
         }
         .row-group { display: flex; gap: 10px; }
         .row-group select, .row-group input { width: 50%; }
         
         button { 
-            background-color: #bfa181; 
+            background-color: var(--btn-bg); 
             color: white; 
             border: none; 
             padding: 12px 15px; 
@@ -57,26 +99,27 @@
             transition: background 0.2s;
             margin-top: 5px;
         }
-        button:hover { background-color: #a48566; }
+        button:hover { background-color: var(--btn-hover); }
         
         ul { list-style: none; padding: 0; }
         li { 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
-            background: #faf6f0; 
+            background: var(--li-bg); 
             padding: 12px 15px; 
             margin-top: 10px; 
             border-radius: 10px; 
-            border: 1px solid #f0e6da;
+            border: 1px solid var(--li-border);
+            transition: background 0.3s, border 0.3s;
         }
-        li.completed span.text { text-decoration: line-through; color: #b5aca6; }
+        li.completed span.text { text-decoration: line-through; opacity: 0.5; }
         .li-left { display: flex; align-items: center; gap: 10px; flex-grow: 1; overflow: hidden; }
-        input[type="checkbox"] { width: 20px; height: 20px; accent-color: #bfa181; cursor: pointer; margin: 0; flex-shrink: 0; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--btn-bg); cursor: pointer; margin: 0; flex-shrink: 0; }
         
         .tag-badge {
-            background-color: #e6dfd5;
-            color: #6b4f3b;
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
             padding: 3px 8px;
             border-radius: 6px;
             font-size: 0.8em;
@@ -85,36 +128,39 @@
         }
         
         .btn-group { display: flex; gap: 5px; flex-shrink: 0; }
-        .action-btn { background-color: #a48566; width: auto; padding: 6px 10px; font-size: 0.85em; border-radius: 6px; margin: 0; }
-        .action-btn:hover { background-color: #8c7355; }
-        .delete-btn { background-color: #d99b9b; width: auto; padding: 6px 10px; font-size: 0.85em; border-radius: 6px; margin: 0; }
+        .action-btn { background-color: var(--subtitle-color); width: auto; padding: 6px 10px; font-size: 0.85em; border-radius: 6px; margin: 0; color: white; }
+        .action-btn:hover { background-color: var(--btn-hover); }
+        .delete-btn { background-color: #d99b9b; width: auto; padding: 6px 10px; font-size: 0.85em; border-radius: 6px; margin: 0; color: white; }
         .delete-btn:hover { background-color: #c48282; }
 
-        .filter-container { font-size: 0.85em; color: #8c7355; font-weight: normal; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .filter-container { font-size: 0.85em; color: var(--subtitle-color); font-weight: normal; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .filter-container label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
         .filter-container input { width: 16px; height: 16px; margin: 0; }
 
-        /* 조회 및 백업 영역 */
         .search-box { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
         .search-box input { margin: 0; flex-grow: 1; }
-        .search-box button { width: auto; margin: 0; padding: 12px 20px; white-space: nowrap; background-color: #bfa181; }
-        .review-result-box { background: #faf6f0; padding: 15px; border-radius: 10px; border: 1px solid #f0e6da; min-height: 80px; color: #4a403a; }
+        .search-box button { width: auto; margin: 0; padding: 12px 20px; white-space: nowrap; }
+        .review-result-box { background: var(--li-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--li-border); min-height: 80px; }
         .review-content-text { white-space: pre-wrap; margin-bottom: 10px; }
         .review-actions { display: flex; gap: 5px; justify-content: flex-end; }
 
         .backup-group { display: flex; gap: 10px; margin-top: 10px; }
-        .backup-group button { background-color: #9c8b7c; font-size: 0.9em; padding: 8px; }
+        .backup-group button { background-color: var(--sub-text); font-size: 0.9em; padding: 8px; }
 
         .stats { display: flex; justify-content: space-around; text-align: center; }
-        .stats div div:last-child { font-size: 1.8em; font-weight: bold; color: #6b4f3b; margin-top: 8px; }
+        .stats div div:last-child { font-size: 1.8em; font-weight: bold; color: var(--title-color); margin-top: 8px; }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
-    <h1>플랜두씨 다이어리</h1>
+    <div class="header-container">
+        <div style="width: 40px;"></div>
+        <h1>플랜두씨 다이어리</h1>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="테마 변경">🌙</button>
+    </div>
     <p class="subtitle">계획하고(Plan), 실행한 뒤(Do), 돌아보기(See)</p>
 
-    <!-- 새 계획 만들기 / 수정하기 카드 -->
+    <!-- 새 계획 / 수정 카드 -->
     <div class="card">
         <h2 id="formTitle">새 계획 만들기</h2>
         <input type="hidden" id="editIndex" value="">
@@ -143,6 +189,7 @@
         <h2>
             내 계획 목록
             <div class="filter-container">
+                <input type="text" id="keywordSearch" placeholder="계획 검색..." oninput="renderPlans()" style="padding: 5px 10px; font-size: 0.9em; margin: 0; width: 130px;">
                 <select id="categoryFilter" onchange="renderPlans()" style="padding: 5px; font-size: 0.9em; margin: 0; width: auto;">
                     <option value="전체">모든 카테고리</option>
                     <option value="공부">공부</option>
@@ -177,7 +224,7 @@
         </div>
     </div>
 
-    <!-- 전체 계획 집계 및 데이터 백업 -->
+    <!-- 전체 계획 집계 및 백업 -->
     <div class="card">
         <h2>전체 계획 집계 및 데이터 관리</h2>
         <div class="stats" style="margin-bottom: 20px;">
@@ -196,7 +243,7 @@
         </div>
         <div class="backup-group">
             <button onclick="exportData()">데이터 백업 (다운로드)</button>
-            <button onclick="document.getElementById('importFile').click()" style="background-color: #bfa181;">데이터 복원 (불러오기)</button>
+            <button onclick="document.getElementById('importFile').click()">데이터 복원 (불러오기)</button>
             <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
         </div>
     </div>
@@ -204,6 +251,18 @@
     <script>
         let plans = JSON.parse(localStorage.getItem('plans')) || [];
         let reviews = JSON.parse(localStorage.getItem('reviews')) || {};
+        let currentTheme = localStorage.getItem('theme') || 'light';
+
+        // 테마 초기 설정
+        document.body.setAttribute('data-theme', currentTheme);
+        document.querySelector('.theme-toggle-btn').innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', currentTheme);
+            document.querySelector('.theme-toggle-btn').innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', currentTheme);
+        }
 
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('planDate').value = todayStr;
@@ -293,6 +352,7 @@
 
             const hideCompleted = document.getElementById('hideCompleted').checked;
             const selectedCategory = document.getElementById('categoryFilter').value;
+            const keyword = document.getElementById('keywordSearch').value.trim().toLowerCase();
             let completedCount = 0;
 
             plans.forEach(p => {
@@ -300,6 +360,7 @@
 
                 if (hideCompleted && p.completed) return;
                 if (selectedCategory !== '전체' && p.category !== selectedCategory) return;
+                if (keyword && !p.text.toLowerCase().includes(keyword)) return;
 
                 const li = document.createElement('li');
                 if (p.completed) li.classList.add('completed');
@@ -308,7 +369,7 @@
                     <div class="li-left">
                         <input type="checkbox" ${p.completed ? 'checked' : ''} onclick="togglePlan(${p.id})">
                         <span class="tag-badge">${p.category || '기타'}</span>
-                        <span class="text"><b>[${p.priority}]</b> ${p.text} <small style="color:#8c7355;">(${p.date})</small></span>
+                        <span class="text"><b>[${p.priority}]</b> ${p.text} <small style="opacity: 0.8;">(${p.date})</small></span>
                     </div>
                     <div class="btn-group">
                         <button class="action-btn" onclick="editPlan(${p.id})">수정</button>
