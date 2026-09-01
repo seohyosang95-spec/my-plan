@@ -24,7 +24,7 @@
             margin-bottom: 25px; 
             border: 1px solid #eee4d5;
         }
-        h2 { color: #6b4f3b; font-size: 1.3em; margin-top: 0; border-bottom: 2px solid #f4eee1; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #6b4f3b; font-size: 1.3em; margin-top: 0; border-bottom: 2px solid #f4eee1; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         input, select, textarea { 
             padding: 12px; 
             margin: 8px 0; 
@@ -90,14 +90,20 @@
         .delete-btn { background-color: #d99b9b; width: auto; padding: 6px 10px; font-size: 0.85em; border-radius: 6px; margin: 0; }
         .delete-btn:hover { background-color: #c48282; }
 
-        .filter-container { font-size: 0.85em; color: #8c7355; font-weight: normal; display: flex; align-items: center; gap: 5px; }
-        .filter-container input { width: auto; margin: 0; height: 16px; width: 16px; }
+        .filter-container { font-size: 0.85em; color: #8c7355; font-weight: normal; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .filter-container label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        .filter-container input { width: 16px; height: 16px; margin: 0; }
 
-        /* 돌아보기 조회 영역 스타일 */
+        /* 조회 및 백업 영역 */
         .search-box { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
         .search-box input { margin: 0; flex-grow: 1; }
         .search-box button { width: auto; margin: 0; padding: 12px 20px; white-space: nowrap; background-color: #bfa181; }
-        .review-result-box { background: #faf6f0; padding: 15px; border-radius: 10px; border: 1px solid #f0e6da; min-height: 80px; white-space: pre-wrap; color: #4a403a; }
+        .review-result-box { background: #faf6f0; padding: 15px; border-radius: 10px; border: 1px solid #f0e6da; min-height: 80px; color: #4a403a; }
+        .review-content-text { white-space: pre-wrap; margin-bottom: 10px; }
+        .review-actions { display: flex; gap: 5px; justify-content: flex-end; }
+
+        .backup-group { display: flex; gap: 10px; margin-top: 10px; }
+        .backup-group button { background-color: #9c8b7c; font-size: 0.9em; padding: 8px; }
 
         .stats { display: flex; justify-content: space-around; text-align: center; }
         .stats div div:last-child { font-size: 1.8em; font-weight: bold; color: #6b4f3b; margin-top: 8px; }
@@ -136,9 +142,17 @@
     <div class="card">
         <h2>
             내 계획 목록
-            <label class="filter-container">
-                <input type="checkbox" id="hideCompleted" onchange="renderPlans()"> 완료된 항목 숨기기
-            </label>
+            <div class="filter-container">
+                <select id="categoryFilter" onchange="renderPlans()" style="padding: 5px; font-size: 0.9em; margin: 0; width: auto;">
+                    <option value="전체">모든 카테고리</option>
+                    <option value="공부">공부</option>
+                    <option value="업무">업무</option>
+                    <option value="운동">운동</option>
+                    <option value="생활">생활</option>
+                    <option value="기타">기타</option>
+                </select>
+                <label><input type="checkbox" id="hideCompleted" onchange="renderPlans()"> 완료 숨기기</label>
+            </div>
         </h2>
         <ul id="planList"></ul>
     </div>
@@ -158,25 +172,32 @@
             <input type="date" id="searchDate" onchange="searchReview()">
             <button onclick="clearSearch()">오늘 보기</button>
         </div>
-        <div id="reviewResult" class="review-result-box">날짜를 선택하면 해당 기록이 여기에 표시됩니다.</div>
+        <div id="reviewResult" class="review-result-box">
+            <div class="review-content-text">날짜를 선택하면 해당 기록이 여기에 표시됩니다.</div>
+        </div>
     </div>
 
-    <!-- 전체 계획 집계 -->
+    <!-- 전체 계획 집계 및 데이터 백업 -->
     <div class="card">
-        <h2>전체 계획 집계</h2>
-        <div class="stats">
+        <h2>전체 계획 집계 및 데이터 관리</h2>
+        <div class="stats" style="margin-bottom: 20px;">
             <div>
-                <div>등록된 전체 계획</div>
+                <div>등록된 전체</div>
                 <div id="totalCount">0개</div>
             </div>
             <div>
-                <div>성공적으로 완료한 계획</div>
+                <div>완료한 계획</div>
                 <div id="completedCount">0개</div>
             </div>
             <div>
-                <div>아직 못 한 계획</div>
+                <div>못 한 계획</div>
                 <div id="pendingCount">0개</div>
             </div>
+        </div>
+        <div class="backup-group">
+            <button onclick="exportData()">데이터 백업 (다운로드)</button>
+            <button onclick="document.getElementById('importFile').click()" style="background-color: #bfa181;">데이터 복원 (불러오기)</button>
+            <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
         </div>
     </div>
 
@@ -208,7 +229,6 @@
             }
 
             if (editIndex === "") {
-                // 새 계획 추가
                 const newPlan = {
                     id: Date.now(),
                     text: textInput.value,
@@ -219,7 +239,6 @@
                 };
                 plans.push(newPlan);
             } else {
-                // 기존 계획 수정
                 const index = parseInt(editIndex);
                 plans[index].text = textInput.value;
                 plans[index].date = dateInput.value || '날짜 미지정';
@@ -273,12 +292,14 @@
             listEl.innerHTML = '';
 
             const hideCompleted = document.getElementById('hideCompleted').checked;
+            const selectedCategory = document.getElementById('categoryFilter').value;
             let completedCount = 0;
 
             plans.forEach(p => {
                 if (p.completed) completedCount++;
 
-                if (hideCompleted && p.completed) return; // 숨기기 체크 시 완료 항목 제외
+                if (hideCompleted && p.completed) return;
+                if (selectedCategory !== '전체' && p.category !== selectedCategory) return;
 
                 const li = document.createElement('li');
                 if (p.completed) li.classList.add('completed');
@@ -321,7 +342,7 @@
             
             document.getElementById('searchDate').value = dateInput;
             searchReview();
-            alert('돌아기가 저장되었습니다.');
+            alert('돌아보기 기록이 저장되었습니다.');
         }
 
         function searchReview() {
@@ -329,20 +350,79 @@
             const resultBox = document.getElementById('reviewResult');
 
             if (!searchDate) {
-                resultBox.innerText = '날짜를 선택해주세요.';
+                resultBox.innerHTML = '<div class="review-content-text">날짜를 선택해주세요.</div>';
                 return;
             }
 
             if (reviews[searchDate]) {
-                resultBox.innerText = reviews[searchDate];
+                resultBox.innerHTML = `
+                    <div class="review-content-text">${reviews[searchDate]}</div>
+                    <div class="review-actions">
+                        <button class="action-btn" onclick="editReview('${searchDate}')">수정</button>
+                        <button class="delete-btn" onclick="deleteReview('${searchDate}')">삭제</button>
+                    </div>
+                `;
             } else {
-                resultBox.innerText = '해당 날짜에 작성된 돌아보기 기록이 없습니다.';
+                resultBox.innerHTML = '<div class="review-content-text">해당 날짜에 작성된 돌아보기 기록이 없습니다.</div>';
+            }
+        }
+
+        function editReview(dateStr) {
+            document.getElementById('reviewDate').value = dateStr;
+            document.getElementById('dailyReviewText').value = reviews[dateStr];
+            window.scrollTo({ top: document.getElementById('dailyReviewText').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function deleteReview(dateStr) {
+            if (confirm(`${dateStr} 돌아보기 기록을 삭제하시겠습니까?`)) {
+                delete reviews[dateStr];
+                localStorage.setItem('reviews', JSON.stringify(reviews));
+                searchReview();
             }
         }
 
         function clearSearch() {
             document.getElementById('searchDate').value = todayStr;
             searchReview();
+        }
+
+        // --- 데이터 백업 및 복원 함수 ---
+        function exportData() {
+            const data = { plans, reviews };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `plandouce_backup_${todayStr}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.plans && parsed.reviews) {
+                        plans = parsed.plans;
+                        reviews = parsed.reviews;
+                        localStorage.setItem('plans', JSON.stringify(plans));
+                        localStorage.setItem('reviews', JSON.stringify(reviews));
+                        renderPlans();
+                        searchReview();
+                        alert('데이터가 성공적으로 복원되었습니다.');
+                    } else {
+                        alert('올바른 백업 파일 형식이 아닙니다.');
+                    }
+                } catch (err) {
+                    alert('파일을 읽는 중 오류가 발생했습니다.');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
         }
 
         // 초기 실행
