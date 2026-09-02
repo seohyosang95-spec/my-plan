@@ -237,9 +237,15 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        let plans = JSON.parse(localStorage.getItem('plans')) || [];
-        let reviews = JSON.parse(localStorage.getItem('reviews')) || {};
+        // --- Supabase 연결 설정 ---
+        const SUPABASE_URL = 'https://iphlnjvuxlrjzuqwljxe.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_J9Ktjq0DciqaXLcFZiqwug_-yEdokMu';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let plans = [];
+        let reviews = {};
         let currentTheme = localStorage.getItem('theme') || 'light';
 
         document.body.setAttribute('data-theme', currentTheme);
@@ -257,8 +263,11 @@
         document.getElementById('reviewDate').value = todayStr;
         document.getElementById('searchDate').value = todayStr;
 
-        function saveAndRender() {
-            localStorage.setItem('plans', JSON.stringify(plans));
+        async function saveAndRender() {
+            if (plans.length > 0) {
+                const { error } = await db.from('plans').upsert(plans);
+                if (error) console.error('저장 실패:', error);
+            }
             renderPlans();
         }
 
@@ -330,10 +339,12 @@
             saveAndRender();
         }
 
-        function deletePlan(id) {
+        async function deletePlan(id) {
             if (confirm('이 계획과 하위 할 일이 모두 삭제됩니다.')) {
                 plans = plans.filter(p => p.id !== id);
-                saveAndRender();
+                renderPlans();
+                const { error } = await db.from('plans').delete().eq('id', id);
+                if (error) console.error('삭제 실패:', error);
             }
         }
 
@@ -532,7 +543,7 @@
         }
 
         // --- 하루 돌아보기 관련 함수 ---
-        function saveReview() {
+        async function saveReview() {
             const dateInput = document.getElementById('reviewDate').value;
             const textInput = document.getElementById('dailyReviewText').value;
 
@@ -546,7 +557,9 @@
             }
 
             reviews[dateInput] = textInput;
-            localStorage.setItem('reviews', JSON.stringify(reviews));
+            const { error } = await db.from('reviews').upsert({ date: dateInput, content: textInput });
+            if (error) console.error('저장 실패:', error);
+
             document.getElementById('searchDate').value = dateInput;
             searchReview();
             alert('돌아보기 기록이 저장되었습니다.');
@@ -580,10 +593,11 @@
             window.scrollTo({ top: document.getElementById('dailyReviewText').offsetTop - 100, behavior: 'smooth' });
         }
 
-        function deleteReview(dateStr) {
+        async function deleteReview(dateStr) {
             if (confirm(`${dateStr} 돌아보기 기록을 삭제하시겠습니까?`)) {
                 delete reviews[dateStr];
-                localStorage.setItem('reviews', JSON.stringify(reviews));
+                const { error } = await db.from('reviews').delete().eq('date', dateStr);
+                if (error) console.error('삭제 실패:', error);
                 searchReview();
             }
         }
@@ -610,14 +624,21 @@
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
                     if (parsed.plans && parsed.reviews) {
                         plans = parsed.plans;
                         reviews = parsed.reviews;
-                        localStorage.setItem('plans', JSON.stringify(plans));
-                        localStorage.setItem('reviews', JSON.stringify(reviews));
+
+                        if (plans.length > 0) {
+                            await db.from('plans').upsert(plans);
+                        }
+                        const reviewRows = Object.keys(reviews).map(date => ({ date, content: reviews[date] }));
+                        if (reviewRows.length > 0) {
+                            await db.from('reviews').upsert(reviewRows);
+                        }
+
                         renderPlans();
                         searchReview();
                         alert('데이터가 성공적으로 복원되었습니다.');
@@ -632,9 +653,28 @@
             event.target.value = '';
         }
 
-        // 초기 실행
-        renderPlans();
-        searchReview();
+        // 초기 실행: Supabase에서 데이터 불러오기
+        async function loadData() {
+            const { data: planData, error: planError } = await db.from('plans').select('*').order('id', { ascending: true });
+            if (planError) {
+                console.error('계획 불러오기 실패:', planError);
+            } else {
+                plans = planData || [];
+            }
+
+            const { data: reviewData, error: reviewError } = await db.from('reviews').select('*');
+            if (reviewError) {
+                console.error('돌아보기 불러오기 실패:', reviewError);
+            } else {
+                reviews = {};
+                (reviewData || []).forEach(r => { reviews[r.date] = r.content; });
+            }
+
+            renderPlans();
+            searchReview();
+        }
+
+        loadData();
     </script>
 </body>
 </html>
