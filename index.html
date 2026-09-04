@@ -151,12 +151,36 @@
 </head>
 <body data-theme="light">
 
+    <!-- 로그인 / 회원가입 화면 -->
+    <div id="authScreen" class="card" style="max-width: 400px; margin: 60px auto;">
+        <h1 style="text-align:center; font-size: 1.6em; margin-bottom: 20px;">플랜두씨 다이어리</h1>
+        <h2 id="authTitle" style="text-align:center;">로그인</h2>
+        <input type="email" id="authEmail" placeholder="이메일">
+        <input type="password" id="authPassword" placeholder="비밀번호 (6자 이상)">
+        <button id="authSubmitBtn" onclick="handleAuthSubmit()">로그인</button>
+        <p style="text-align:center; margin-top: 15px;">
+            <a href="#" onclick="toggleAuthMode(); return false;" id="authToggleLink" style="color: var(--btn-bg);">계정이 없으신가요? 회원가입</a>
+        </p>
+        <p id="authError" style="color: #c0392b; text-align:center; margin-top: 10px;"></p>
+    </div>
+
+    <!-- 로그인 후 보이는 전체 화면 -->
+    <div id="appContent" style="display:none;">
+
     <div class="header-container">
         <div style="width: 40px;"></div>
         <h1>플랜두씨 다이어리</h1>
         <button class="theme-toggle-btn" onclick="toggleTheme()" title="테마 변경">🌙</button>
     </div>
     <p class="subtitle">계획하고(Plan), 실행한 뒤(Do), 돌아보기(See)</p>
+
+    <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px;">
+        <span id="userEmailDisplay" style="color: var(--subtitle-color); font-size: 0.9em;"></span>
+        <div>
+            <button onclick="handleLogout()" style="width:auto; padding: 8px 16px; margin-right: 8px;">로그아웃</button>
+            <button onclick="handleDeleteAccount()" style="width:auto; padding: 8px 16px; background-color:#c0392b;">계정 삭제</button>
+        </div>
+    </div>
 
     <!-- 계획 카드 -->
     <div class="card">
@@ -237,6 +261,8 @@
         </div>
     </div>
 
+    </div><!-- /appContent -->
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // --- Supabase 연결 설정 ---
@@ -246,7 +272,89 @@
 
         let plans = [];
         let reviews = {};
+        let currentUser = null;
+        let authMode = 'login'; // 'login' 또는 'signup'
         let currentTheme = localStorage.getItem('theme') || 'light';
+
+        // --- 인증(로그인/회원가입) 관련 ---
+        function toggleAuthMode() {
+            authMode = (authMode === 'login') ? 'signup' : 'login';
+            document.getElementById('authTitle').innerText = (authMode === 'login') ? '로그인' : '회원가입';
+            document.getElementById('authSubmitBtn').innerText = (authMode === 'login') ? '로그인' : '회원가입';
+            document.getElementById('authToggleLink').innerText = (authMode === 'login') ? '계정이 없으신가요? 회원가입' : '이미 계정이 있으신가요? 로그인';
+            document.getElementById('authError').innerText = '';
+        }
+
+        async function handleAuthSubmit() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const errorBox = document.getElementById('authError');
+            errorBox.innerText = '';
+
+            if (!email || !password) {
+                errorBox.innerText = '이메일과 비밀번호를 모두 입력해주세요.';
+                return;
+            }
+
+            if (authMode === 'signup') {
+                const { data, error } = await db.auth.signUp({ email, password });
+                if (error) {
+                    errorBox.innerText = '회원가입 실패: ' + error.message;
+                    return;
+                }
+                if (data.session) {
+                    await afterLogin(data.session.user);
+                } else {
+                    errorBox.style.color = 'green';
+                    errorBox.innerText = '가입 확인 메일을 보냈습니다. 메일함을 확인해주세요.';
+                }
+            } else {
+                const { data, error } = await db.auth.signInWithPassword({ email, password });
+                if (error) {
+                    errorBox.innerText = '로그인 실패: 이메일 또는 비밀번호를 확인해주세요.';
+                    return;
+                }
+                await afterLogin(data.user);
+            }
+        }
+
+        async function afterLogin(user) {
+            currentUser = user;
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'block';
+            document.getElementById('userEmailDisplay').innerText = user.email + ' 님으로 로그인됨';
+            await loadData();
+        }
+
+        async function handleLogout() {
+            await db.auth.signOut();
+            currentUser = null;
+            plans = [];
+            reviews = {};
+            document.getElementById('appContent').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('authEmail').value = '';
+            document.getElementById('authPassword').value = '';
+        }
+
+        async function handleDeleteAccount() {
+            if (!confirm('정말로 계정을 삭제하시겠습니까? 저장된 모든 계획과 돌아보기 기록이 영구 삭제됩니다.')) return;
+            if (!currentUser) return;
+            await db.from('plans').delete().eq('user_id', currentUser.id);
+            await db.from('reviews').delete().eq('user_id', currentUser.id);
+            alert('회원님의 모든 자료가 삭제되었습니다. 이제 로그아웃됩니다.');
+            await handleLogout();
+        }
+
+        async function checkExistingSession() {
+            const { data: { session } } = await db.auth.getSession();
+            if (session) {
+                await afterLogin(session.user);
+            } else {
+                document.getElementById('authScreen').style.display = 'block';
+                document.getElementById('appContent').style.display = 'none';
+            }
+        }
 
         document.body.setAttribute('data-theme', currentTheme);
         document.querySelector('.theme-toggle-btn').innerText = currentTheme === 'dark' ? '☀️' : '🌙';
@@ -287,6 +395,7 @@
             if (editIndex === "") {
                 const newPlan = {
                     id: Date.now(),
+                    user_id: currentUser.id,
                     text: textInput.value,
                     date: dateInput.value || '날짜 미지정',
                     category: categoryInput.value,
@@ -557,7 +666,7 @@
             }
 
             reviews[dateInput] = textInput;
-            const { error } = await db.from('reviews').upsert({ date: dateInput, content: textInput });
+            const { error } = await db.from('reviews').upsert({ date: dateInput, content: textInput, user_id: currentUser.id }, { onConflict: 'date,user_id' });
             if (error) console.error('저장 실패:', error);
 
             document.getElementById('searchDate').value = dateInput;
@@ -631,12 +740,13 @@
                         plans = parsed.plans;
                         reviews = parsed.reviews;
 
+                        plans = plans.map(p => ({ ...p, user_id: currentUser.id }));
                         if (plans.length > 0) {
                             await db.from('plans').upsert(plans);
                         }
-                        const reviewRows = Object.keys(reviews).map(date => ({ date, content: reviews[date] }));
+                        const reviewRows = Object.keys(reviews).map(date => ({ date, content: reviews[date], user_id: currentUser.id }));
                         if (reviewRows.length > 0) {
-                            await db.from('reviews').upsert(reviewRows);
+                            await db.from('reviews').upsert(reviewRows, { onConflict: 'date,user_id' });
                         }
 
                         renderPlans();
@@ -653,7 +763,7 @@
             event.target.value = '';
         }
 
-        // 초기 실행: Supabase에서 데이터 불러오기
+        // 로그인 후 내 데이터 불러오기 (RLS 덕분에 자동으로 내 것만 옵니다)
         async function loadData() {
             const { data: planData, error: planError } = await db.from('plans').select('*').order('id', { ascending: true });
             if (planError) {
@@ -674,7 +784,8 @@
             searchReview();
         }
 
-        loadData();
+        // 초기 실행: 로그인 상태 확인
+        checkExistingSession();
     </script>
 </body>
 </html>
